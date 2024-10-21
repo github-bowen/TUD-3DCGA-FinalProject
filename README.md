@@ -1,32 +1,32 @@
-# To-Do List
+# Project Feature Tracker
 
-## Minimal Features
+## Implemented Features
 
-- [x] **Multiple viewpoints**:
-  - Implement a top view.
-  - Implement a third-person camera that follows a character.
+- **Multiple Viewpoints** (10/21/2024)
+- 
+
+
+
+## Upcoming Features
+
+### Minimal Features
 
 - [ ] **Advanced shading**:
   - Include complex material models (PBR shaders).
-
 - [ ] **Material textures**:
   - Use kd (diffuse color).
   - Use ks (specular color).
   - Implement shininess and roughness parameters.
-
 - [ ] **Normal mapping**
-
 - [ ] **Environment mapping**
-
 - [ ] **Smooth paths**:
   - Implement smooth paths using Bézier curves (at least 3 Cubic Bézier curves).
   - Toggle rendering of the Bézier curve on/off.
-
 - [ ] **Hierarchical transformations**:
   - Animate an object with several components (e.g., robot arm, snake, solar system, or vehicle).
   - Ensure animation is done via code (not imported from external software).
 
-## Extra Features (Optional)
+### Extra Features (Optional)
 
 - [ ] Move at constant speed along a Bézier curve.
 - [ ] Shadows for multiple light sources.
@@ -47,3 +47,7 @@
 - [ ] Screen Space Ray Tracing (SSRT) for specular reflections.
 - [ ] Ambient Occlusion.
 - [ ] Spatial-temporal reprojection.
+
+## Assets & References
+
+- [ ] Use 3D models and textures (with correct rights and references).
