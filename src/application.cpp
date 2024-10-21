@@ -21,28 +21,40 @@ DISABLE_WARNINGS_POP()
 #include <iostream>
 #include <vector>
 
+#include "config.h"
+
 class Application {
 public:
     Application()
         : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
-        , m_texture(RESOURCE_ROOT "resources/checkerboard.png")
+        , m_texture(RESOURCE_ROOT TEXTURE_PATH)
     {
+        this->__init_callback();
+        this->__init_meshes();
+        this->__init_shader();
+    }
+
+    void __init_callback() {
         m_window.registerKeyCallback([this](int key, int scancode, int action, int mods) {
             if (action == GLFW_PRESS)
                 onKeyPressed(key, mods);
             else if (action == GLFW_RELEASE)
                 onKeyReleased(key, mods);
-        });
+            });
         m_window.registerMouseMoveCallback(std::bind(&Application::onMouseMove, this, std::placeholders::_1));
         m_window.registerMouseButtonCallback([this](int button, int action, int mods) {
             if (action == GLFW_PRESS)
                 onMouseClicked(button, mods);
             else if (action == GLFW_RELEASE)
                 onMouseReleased(button, mods);
-        });
+            });
+    }
 
-        m_meshes = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/dragon.obj");
+    void __init_meshes() {
+        m_meshes = GPUMesh::loadMeshGPU(RESOURCE_ROOT MESH_PATH);
+    }
 
+    void __init_shader() {
         try {
             ShaderBuilder defaultBuilder;
             defaultBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shader_vert.glsl");
@@ -80,7 +92,7 @@ public:
             ImGui::End();
 
             // Clear the screen
-            glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // ...
