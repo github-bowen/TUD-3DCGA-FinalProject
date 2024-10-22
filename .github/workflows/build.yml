@@ -1,4 +1,4 @@
-name: Build and Test on Windows
+name: Build and Test on Linux
 
 on:
   push:
@@ -10,66 +10,25 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
 
-    - name: Set up CMake
-      uses: jwlawson/actions-setup-cmake@v1
-
-    - name: Install Pthread and other dependencies
-      shell: pwsh
+    - name: Install Dependencies
       run: |
-        $pthreadPath = "C:\path\to\pthread\include"
-        if (-Not (Test-Path $pthreadPath)) {
-            Write-Host "Pthread not found. Please ensure it is installed or configure the project to use Windows threads."
-        } else {
-            Write-Host "Pthread found."
-        }
-
-    - name: Download and Setup Mesa3D for OpenGL support
-      run: |
-        echo "Downloading Mesa3D for software OpenGL support..."
-        curl -L -o mesa3d.zip https://github.com/pal1000/mesa-dist-win/releases/download/22.3.5/mesa3d-22.3.5-release-mingw.7z
-        7z x mesa3d.zip -omesa3d
-        echo "Setting OpenGL version overrides..."
-        $env:MESA_GL_VERSION_OVERRIDE = "4.5"
-        $env:MESA_GLSL_VERSION_OVERRIDE = "450"
-
-    - name: Verify Mesa3D Installation
-      run: |
-        echo "Verifying Mesa3D installation..."
-        if (Test-Path "mesa3d/x64/") {
-            echo "Mesa3D found."
-            if (Test-Path "mesa3d/x64/opengl32.dll") {
-                echo "OpenGL DLL found."
-            } else {
-                echo "OpenGL DLL not found. Check the extraction step."
-                exit 1
-            }
-            if (Test-Path "mesa3d/x64/glu32.dll") {
-                echo "GLU DLL found."
-            } else {
-                echo "GLU DLL not found. Check the extraction step."
-                exit 1
-            }
-        } else {
-            echo "Mesa3D directory not found. Check the download and extraction step."
-            exit 1
-        }
+        echo "Installing necessary packages..."
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libgl1-mesa-dev libglu1-mesa-dev libglfw3-dev
 
     - name: Configure project with CMake
-      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+      run: cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CMAKE_LIST_FILE="CMakeLists_linux.txt"
 
     - name: Build project
       run: cmake --build build --config Release
 
-    - name: Run the application using Mesa3D (OpenGL software renderer)
-      shell: pwsh
+    - name: Run the application
       run: |
-        echo "Updating PATH to include Mesa3D..."
-        [System.Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$(pwd)\mesa3d\x64\", [System.EnvironmentVariableTarget]::Process)
         echo "Running the application..."
-        & ".\build\Release\Master_TechDemo.exe"
+        ./build/Master_TechDemo
