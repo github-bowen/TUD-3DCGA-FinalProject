@@ -20,14 +20,16 @@ jobs:
       uses: jwlawson/actions-setup-cmake@v1
 
     - name: Install Pthread and other dependencies
+      shell: pwsh
       run: |
         # This step will attempt to install necessary packages.
-        # Note: Windows doesn't use pthreads like Linux, but make sure the libraries are available.
-        echo "Checking for Pthread installation..."
-        if not exist "C:\path\to\pthread\include" (
-            echo "Pthread not found. Installing pthreads..."
-            REM Include installation commands here if necessary.
-        )
+        $pthreadPath = "C:\path\to\pthread\include"
+        if (-Not (Test-Path $pthreadPath)) {
+            Write-Host "Pthread not found. Please ensure it is installed or configure the project to use Windows threads."
+            # You can include installation commands here if necessary, or remove the check if not required.
+        } else {
+            Write-Host "Pthread found."
+        }
 
     - name: Download and Setup Mesa3D for OpenGL support
       run: |
