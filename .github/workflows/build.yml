@@ -44,6 +44,7 @@ jobs:
       run: |
         echo "Starting Xvfb..."
         Xvfb :99 -screen 0 1024x768x24 &
+        sleep 2  # Wait for Xvfb to start
         export DISPLAY=:99
         echo "Running the application..."
         ./build/Master_TechDemo
