@@ -23,17 +23,11 @@ public:
 
     void bind(GLint textureSlot);
 
-    // NOTE: manually added
-    int getWidth() const { return width; }
-    int getHeight() const { return height; }
-    const unsigned char* get_data() const { return data.get(); }
+    
 
 private:
     static constexpr GLuint INVALID = 0xFFFFFFFF;
     GLuint m_texture { INVALID };
 
-    // NOTE: manually added
-    int width;                // Store texture width
-    int height;               // Store texture height
-    std::unique_ptr<unsigned char[]> data; // Store pixel data
+    
 };
