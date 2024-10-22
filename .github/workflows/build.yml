@@ -26,7 +26,8 @@ jobs:
           libgl1-mesa-dev \
           libglu1-mesa-dev \
           libglfw3-dev \
-          libxinerama-dev  # Add this line
+          libxinerama-dev \
+          libxcursor-dev  # Add this line for Xcursor headers
 
     - name: Configure project with CMake
       run: cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CMAKE_LIST_FILE="CMakeLists_linux.txt"
