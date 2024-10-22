@@ -1,0 +1,29 @@
+name: Build and Test on Windows
+
+on:
+  push:
+    branches:
+      - main  # Trigger workflow on push to the 'main' branch
+  pull_request:
+    branches:
+      - main  # Trigger workflow on pull requests to 'main' branch
+
+jobs:
+  build:
+    runs-on: windows-latest  # Use the latest available Windows environment
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3  # Checkout the repository's code
+
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v1  # Install and set up CMake
+
+    - name: Configure project with CMake
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64  # Configure with Visual Studio 2022 and x64 architecture
+
+    - name: Build project
+      run: cmake --build build --config Release  # Build the project in Release configuration
+
+    - name: Run the application (optional)
+      run: .\build\Release\Master_TechDemo.exe  # Run the built executable (optional step)
