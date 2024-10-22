@@ -28,7 +28,11 @@ jobs:
           libglfw3-dev \
           libxinerama-dev \
           libxcursor-dev \
-          libxi-dev  # Added this line for XInput headers
+          libxi-dev \
+          libxrandr-dev \
+          libx11-dev \
+          libxext-dev \
+          xvfb  # Added this line to install Xvfb
 
     - name: Configure project with CMake
       run: cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CMAKE_LIST_FILE="CMakeLists_linux.txt"
@@ -36,7 +40,10 @@ jobs:
     - name: Build project
       run: cmake --build build --config Release
 
-    - name: Run the application
+    - name: Run the application using Xvfb
       run: |
+        echo "Starting Xvfb..."
+        Xvfb :99 -screen 0 1024x768x24 &
+        export DISPLAY=:99
         echo "Running the application..."
         ./build/Master_TechDemo
