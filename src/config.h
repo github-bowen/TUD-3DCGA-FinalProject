@@ -46,7 +46,8 @@ namespace config {
 
     const std::map<std::string, GLuint> textureSlots = {
         {"mesh", GL_TEXTURE0},
-        {"scene", GL_TEXTURE1}
+        {"scene", GL_TEXTURE1},
+        {"cube", GL_TEXTURE2}
     };
 }
 
