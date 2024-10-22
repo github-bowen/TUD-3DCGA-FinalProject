@@ -8,7 +8,7 @@
 
   - Implemented WASD movement in Camera class
 
-  - TODO: Bugs after closing the window
+  - ~~TODO: Bugs after closing the window~~ (Fixed)
 
 
 
