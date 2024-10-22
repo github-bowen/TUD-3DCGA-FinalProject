@@ -37,8 +37,8 @@ jobs:
         curl -L -o mesa3d.zip https://github.com/pal1000/mesa-dist-win/releases/download/22.3.5/mesa3d-22.3.5-release-mingw.7z
         7z x mesa3d.zip -omesa3d
         echo "Setting OpenGL version overrides..."
-        set MESA_GL_VERSION_OVERRIDE=4.5
-        set MESA_GLSL_VERSION_OVERRIDE=450
+        $env:MESA_GL_VERSION_OVERRIDE = "4.5"
+        $env:MESA_GLSL_VERSION_OVERRIDE = "450"
 
     - name: Configure project with CMake
       run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
@@ -47,8 +47,9 @@ jobs:
       run: cmake --build build --config Release
 
     - name: Run the application using Mesa3D (OpenGL software renderer)
+      shell: pwsh
       run: |
         echo "Updating PATH to include Mesa3D..."
-        set PATH=%PATH%;$(pwd)/mesa3d/x64/
+        $env:PATH += ";$(pwd)/mesa3d/x64/"
         echo "Running the application..."
-        .\build\Release\Master_TechDemo.exe
+        & ".\build\Release\Master_TechDemo.exe"
