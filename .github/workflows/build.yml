@@ -44,7 +44,7 @@ jobs:
       run: |
         echo "Starting Xvfb..."
         Xvfb :99 -screen 0 1024x768x24 &
-        sleep 8  # Wait for Xvfb to start
+        sleep 2  # Wait for Xvfb to start
         export DISPLAY=:99
         echo "Running the application..."
         
@@ -55,7 +55,7 @@ jobs:
         
         # Wait for a manual stop or timeout (for example, 5 minutes)
         echo "Running for 5 minutes... (You can stop the application manually)"
-        sleep 300  # Adjust the timeout duration as needed
+        sleep 30  # Adjust the timeout duration as needed
 
         echo "Stopping Xvfb..."
         pkill Xvfb
