@@ -16,8 +16,9 @@ Scene::Scene(const std::vector<std::string>& scene_paths) {
 
     for (const auto& scene_path : scene_paths) {
         const std::filesystem::path path{ scene_path };
-        images.emplace_back(path);
+        images.emplace_back(Image(path));
     }
+    assert(images.size() == 6);
 
     // load cube texture
     loadCubemap();
@@ -27,8 +28,11 @@ Scene::Scene(const std::vector<std::string>& scene_paths) {
 }
 
 Scene::~Scene() {
-    glDeleteVertexArrays(1, &m_scene_vao);
+    glDeleteTextures(1, &m_scene_cube_map_texture);
     glDeleteBuffers(1, &m_scene_vbo);
+    glDeleteVertexArrays(1, &m_scene_vao);
+    
+    
     // TODO
 }
 

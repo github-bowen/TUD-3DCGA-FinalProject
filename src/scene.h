@@ -25,59 +25,59 @@ private:
 
     std::vector<Image> images;
     GLuint m_scene_vao, m_scene_vbo, m_scene_cube_map_texture;
-	const GLfloat vertices[6 * 6 * 3] = {
+    const GLfloat vertices[6 * 6 * 3] = {
+        
 
+        // Right face
+        1.0f, -1.0f,  1.0f,  // Right top front
+        1.0f,  1.0f,  1.0f,  // Right bottom front
+        1.0f,  1.0f, -1.0f,  // Right bottom back
+        1.0f, -1.0f, -1.0f,  // Right top back
+        1.0f, -1.0f,  1.0f,  // Right top front (repeat)
+        1.0f,  1.0f, -1.0f,  // Right bottom back (repeat)
 
-		// Right face
-		1.0f, -1.0f,  1.0f,  // Right top front
-		1.0f,  1.0f,  1.0f,  // Right bottom front
-		1.0f,  1.0f, -1.0f,  // Right bottom back
-		1.0f, -1.0f, -1.0f,  // Right top back
-		1.0f, -1.0f,  1.0f,  // Right top front (repeat)
-		1.0f,  1.0f, -1.0f,  // Right bottom back (repeat)
+        // Left face
+        -1.0f, -1.0f, -1.0f, // Left top back
+        -1.0f,  1.0f, -1.0f, // Left bottom back
+        -1.0f,  1.0f,  1.0f, // Left bottom front
+        -1.0f, -1.0f,  1.0f, // Left top front
+        -1.0f, -1.0f, -1.0f, // Left top back (repeat)
+        -1.0f,  1.0f,  1.0f, // Left bottom front (repeat)
 
-		// Left face
-		-1.0f, -1.0f, -1.0f, // Left top back
-		-1.0f,  1.0f, -1.0f, // Left bottom back
-		-1.0f,  1.0f,  1.0f, // Left bottom front
-		-1.0f, -1.0f,  1.0f, // Left top front
-		-1.0f, -1.0f, -1.0f, // Left top back (repeat)
-		-1.0f,  1.0f,  1.0f, // Left bottom front (repeat)
+        // Top face
+        -1.0f,  1.0f, -1.0f, // Left bottom back
+         1.0f,  1.0f, -1.0f, // Right bottom back
+         1.0f,  1.0f,  1.0f, // Right bottom front
+        -1.0f,  1.0f,  1.0f, // Left bottom front
+        -1.0f,  1.0f, -1.0f, // Left bottom back (repeat)
+         1.0f,  1.0f,  1.0f, // Right bottom front (repeat)
 
-		// Top face
-		-1.0f,  1.0f, -1.0f, // Left bottom back
-		 1.0f,  1.0f, -1.0f, // Right bottom back
-		 1.0f,  1.0f,  1.0f, // Right bottom front
-		-1.0f,  1.0f,  1.0f, // Left bottom front
-		-1.0f,  1.0f, -1.0f, // Left bottom back (repeat)
-		 1.0f,  1.0f,  1.0f, // Right bottom front (repeat)
+         // Bottom face
+         -1.0f, -1.0f,  1.0f, // Left top front
+          1.0f, -1.0f,  1.0f, // Right top front
+          1.0f, -1.0f, -1.0f, // Right top back
+         -1.0f, -1.0f, -1.0f, // Left top back
+         -1.0f, -1.0f,  1.0f, // Left top front (repeat)
+          1.0f, -1.0f, -1.0f, // Right top back (repeat)
 
-		 // Bottom face
-		 -1.0f, -1.0f,  1.0f, // Left top front
-		  1.0f, -1.0f,  1.0f, // Right top front
-		  1.0f, -1.0f, -1.0f, // Right top back
-		 -1.0f, -1.0f, -1.0f, // Left top back
-		 -1.0f, -1.0f,  1.0f, // Left top front (repeat)
-		  1.0f, -1.0f, -1.0f, // Right top back (repeat)
+        
 
+          // Front face
+          -1.0f, -1.0f,  1.0f, // Left top front
+           1.0f, -1.0f,  1.0f, // Right top front
+           1.0f,  1.0f,  1.0f, // Right bottom front
+          -1.0f,  1.0f,  1.0f, // Left bottom front
+          -1.0f, -1.0f,  1.0f, // Left top front (repeat)
+           1.0f,  1.0f,  1.0f, // Right bottom front (repeat)
 
-
-		  // Front face
-		  -1.0f, -1.0f,  1.0f, // Left top front
-		   1.0f, -1.0f,  1.0f, // Right top front
-		   1.0f,  1.0f,  1.0f, // Right bottom front
-		  -1.0f,  1.0f,  1.0f, // Left bottom front
-		  -1.0f, -1.0f,  1.0f, // Left top front (repeat)
-		   1.0f,  1.0f,  1.0f, // Right bottom front (repeat)
-
-		   // Back face
-		   -1.0f, -1.0f, -1.0f, // Left top back
-			1.0f, -1.0f, -1.0f, // Right top back
-			1.0f,  1.0f, -1.0f, // Right bottom back
-		   -1.0f,  1.0f, -1.0f, // Left bottom back
-		   -1.0f, -1.0f, -1.0f, // Left top back (repeat)
-			1.0f,  1.0f, -1.0f  // Right bottom back (repeat)
-	};
+           // Back face
+           -1.0f, -1.0f, -1.0f, // Left top back
+            1.0f, -1.0f, -1.0f, // Right top back
+            1.0f,  1.0f, -1.0f, // Right bottom back
+           -1.0f,  1.0f, -1.0f, // Left bottom back
+           -1.0f, -1.0f, -1.0f, // Left top back (repeat)
+            1.0f,  1.0f, -1.0f  // Right bottom back (repeat)
+    };
 
 
 
