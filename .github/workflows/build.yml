@@ -1,34 +1,52 @@
-name: Build and Test on Linux
+name: Build and Test on Windows
 
 on:
   push:
     branches:
-      - '**'  # Monitor all branches
+      - '**'
   pull_request:
     branches:
-      - '**'  # Monitor all branches for PRs
+      - '**'
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Switch to the latest Ubuntu environment
+    runs-on: windows-latest
 
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
 
-    - name: Install dependencies
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v1
+
+    - name: Install Pthread and other dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake make g++ mesa-utils libgl1-mesa-dev libglx-mesa0 libglvnd-dev xorg-dev  # Install Mesa3D and OpenGL libraries
-        sudo apt-get install -y libpthread-stubs0-dev  # Install pthread
+        # This step will attempt to install necessary packages.
+        # Note: Windows doesn't use pthreads like Linux, but make sure the libraries are available.
+        echo "Checking for Pthread installation..."
+        if not exist "C:\path\to\pthread\include" (
+            echo "Pthread not found. Installing pthreads..."
+            REM Include installation commands here if necessary.
+        )
+
+    - name: Download and Setup Mesa3D for OpenGL support
+      run: |
+        echo "Downloading Mesa3D for software OpenGL support..."
+        curl -L -o mesa3d.zip https://github.com/pal1000/mesa-dist-win/releases/download/22.3.5/mesa3d-22.3.5-release-mingw.7z
+        7z x mesa3d.zip -omesa3d
+        echo "Setting OpenGL version overrides..."
+        set MESA_GL_VERSION_OVERRIDE=4.5
+        set MESA_GLSL_VERSION_OVERRIDE=450
 
     - name: Configure project with CMake
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 
     - name: Build project
       run: cmake --build build --config Release
 
-    - name: Run the application using Mesa3D (software OpenGL)
+    - name: Run the application using Mesa3D (OpenGL software renderer)
       run: |
-        export LIBGL_ALWAYS_SOFTWARE=1  # Use Mesa3D for software rendering
-        ./build/Master_TechDemo
+        echo "Updating PATH to include Mesa3D..."
+        set PATH=%PATH%;$(pwd)/mesa3d/x64/
+        echo "Running the application..."
+        .\build\Release\Master_TechDemo.exe

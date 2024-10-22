@@ -22,6 +22,11 @@ target_link_libraries(Master_TechDemo PRIVATE CGFramework)
 enable_sanitizers(Master_TechDemo)
 set_project_warnings(Master_TechDemo)
 
+## NOTE: Added for GitHub Actions
+find_package(Threads REQUIRED)
+target_link_libraries(Master_TechDemo PRIVATE Threads::Threads)
+## 
+
 # Copy all files in the resources folder to the build directory after every successful build.
 add_custom_command(TARGET Master_TechDemo POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
