@@ -22,11 +22,9 @@ jobs:
     - name: Install Pthread and other dependencies
       shell: pwsh
       run: |
-        # This step will attempt to install necessary packages.
         $pthreadPath = "C:\path\to\pthread\include"
         if (-Not (Test-Path $pthreadPath)) {
             Write-Host "Pthread not found. Please ensure it is installed or configure the project to use Windows threads."
-            # You can include installation commands here if necessary, or remove the check if not required.
         } else {
             Write-Host "Pthread found."
         }
@@ -40,6 +38,28 @@ jobs:
         $env:MESA_GL_VERSION_OVERRIDE = "4.5"
         $env:MESA_GLSL_VERSION_OVERRIDE = "450"
 
+    - name: Verify Mesa3D Installation
+      run: |
+        echo "Verifying Mesa3D installation..."
+        if (Test-Path "mesa3d/x64/") {
+            echo "Mesa3D found."
+            if (Test-Path "mesa3d/x64/opengl32.dll") {
+                echo "OpenGL DLL found."
+            } else {
+                echo "OpenGL DLL not found. Check the extraction step."
+                exit 1
+            }
+            if (Test-Path "mesa3d/x64/glu32.dll") {
+                echo "GLU DLL found."
+            } else {
+                echo "GLU DLL not found. Check the extraction step."
+                exit 1
+            }
+        } else {
+            echo "Mesa3D directory not found. Check the download and extraction step."
+            exit 1
+        }
+
     - name: Configure project with CMake
       run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 
@@ -50,6 +70,6 @@ jobs:
       shell: pwsh
       run: |
         echo "Updating PATH to include Mesa3D..."
-        $env:PATH += ";$(pwd)/mesa3d/x64/"
+        [System.Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$(pwd)\mesa3d\x64\", [System.EnvironmentVariableTarget]::Process)
         echo "Running the application..."
         & ".\build\Release\Master_TechDemo.exe"
