@@ -3,7 +3,12 @@
 ## Implemented Features
 
 - **Multiple Viewpoints** (10/21/2024)
-- 
+
+- **Cube Mapping (Scene Loading)** (10/22/2024)
+
+  - Implemented WASD movement in Camera class
+
+  - TODO: Bugs after closing the window
 
 
 
