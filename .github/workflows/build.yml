@@ -1,29 +1,34 @@
-name: Build and Test on Windows
+name: Build and Test on Linux
 
 on:
   push:
     branches:
-      - main  # Trigger workflow on push to the 'main' branch
+      - '**'  # Monitor all branches
   pull_request:
     branches:
-      - main  # Trigger workflow on pull requests to 'main' branch
+      - '**'  # Monitor all branches for PRs
 
 jobs:
   build:
-    runs-on: windows-latest  # Use the latest available Windows environment
+    runs-on: ubuntu-latest  # Switch to the latest Ubuntu environment
 
     steps:
     - name: Checkout source code
-      uses: actions/checkout@v3  # Checkout the repository's code
+      uses: actions/checkout@v3
 
-    - name: Set up CMake
-      uses: jwlawson/actions-setup-cmake@v1  # Install and set up CMake
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake make g++ mesa-utils libgl1-mesa-dev libglx-mesa0 libglvnd-dev xorg-dev  # Install Mesa3D and OpenGL libraries
+        sudo apt-get install -y libpthread-stubs0-dev  # Install pthread
 
     - name: Configure project with CMake
-      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64  # Configure with Visual Studio 2022 and x64 architecture
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build project
-      run: cmake --build build --config Release  # Build the project in Release configuration
+      run: cmake --build build --config Release
 
-    - name: Run the application (optional)
-      run: .\build\Release\Master_TechDemo.exe  # Run the built executable (optional step)
+    - name: Run the application using Mesa3D (software OpenGL)
+      run: |
+        export LIBGL_ALWAYS_SOFTWARE=1  # Use Mesa3D for software rendering
+        ./build/Master_TechDemo
