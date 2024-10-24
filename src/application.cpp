@@ -155,7 +155,12 @@ public:
             myLight.position = glm::vec3(0.5f, 1.0f, 0.3f); 
             myLight.color = glm::vec3(1.0f, 1.0f, 1.0f); 
             myLight.direction = glm::vec3(0.0f, -1.0f, 0.0f); 
-            m_wall.draw(m_wallShader, config::m_projectionMatrix, view, config::m_modelMatrix, cameraPos, myLight.position);
+
+            // Assuming you want to rotate around the x-axis by 90 degrees
+            glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around the x-axis
+            model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
+            m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, myLight.position);
 
             for (GPUMesh& mesh : m_meshes) {
                 m_defaultShader.bind();
