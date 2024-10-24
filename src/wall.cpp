@@ -183,8 +183,8 @@ void Wall::draw(Shader& shader, const glm::mat4& projection, const glm::mat4& vi
     //glBindTexture(GL_TEXTURE_CUBE_MAP, m_cube_map_texture);
     //glUniform1i(shader.getUniformLocation("sampler_cube"), 0);
 
-    unsigned int diffuseMap = loadWallmap("resources/textures/brickwall.jpg");
-    unsigned int normalMap = loadWallmap("resources/textures/brickwall_normal.jpg");
+    unsigned int diffuseMap = loadWallmap("resources/textures/tree.jpg");
+    unsigned int normalMap = loadWallmap("resources/textures/tree_normal.jpg");
 
 
     glActiveTexture(GL_TEXTURE3);
