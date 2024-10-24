@@ -29,4 +29,10 @@ private:
 
     void setupWall();
     unsigned int loadWallmap(char const* path);
+    std::tuple<glm::vec3, glm::vec3> calculateTBN(const glm::vec3& pos1, const glm::vec3& pos2, const glm::vec3& pos3,
+        const glm::vec2& uv1, const glm::vec2& uv2, const glm::vec2& uv3);
+    void prepareVertexData(float* vertices, const glm::vec3& pos1, const glm::vec3& pos2, const glm::vec3& pos3, const glm::vec3& pos4,
+        const glm::vec3& normal, const glm::vec2& uv1, const glm::vec2& uv2, const glm::vec2& uv3, const glm::vec2& uv4,
+        const std::tuple<glm::vec3, glm::vec3>& tbn1, const std::tuple<glm::vec3, glm::vec3>& tbn2);
+    void configureBuffers(float* vertices, size_t size);
 };
