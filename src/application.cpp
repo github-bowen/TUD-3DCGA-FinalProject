@@ -25,6 +25,8 @@ DISABLE_WARNINGS_POP()
 #include "scene.h"
 #include "camera.h"
 #include "cube.h"
+#include "wall.h"
+#include "light.h"
 
 class Application {
 public:
@@ -106,6 +108,10 @@ public:
             cubeBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/cubemap_vert.glsl");
             cubeBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/cubemap_frag.glsl");
             m_cubeShader = cubeBuilder.build();
+            ShaderBuilder wallBuilder;
+            wallBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/normalmap_vert.glsl");
+            wallBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/normalmap_frag.glsl");
+            m_wallShader = wallBuilder.build();
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
@@ -144,6 +150,12 @@ public:
             Camera& currentCamera = m_cameras[config::activeCameraIndex];
             glm::vec3 cameraPos = currentCamera.cameraPos();
             m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, cameraPos, config::textureSlots.at("cube"));
+
+            Light myLight;
+            myLight.position = glm::vec3(0.5f, 1.0f, 0.3f); 
+            myLight.color = glm::vec3(1.0f, 1.0f, 1.0f); 
+            myLight.direction = glm::vec3(0.0f, -1.0f, 0.0f); 
+            m_wall.draw(m_wallShader, config::m_projectionMatrix, view, config::m_modelMatrix, cameraPos, myLight.position);
 
             for (GPUMesh& mesh : m_meshes) {
                 m_defaultShader.bind();
@@ -216,6 +228,7 @@ private:
     Shader m_shadowShader;
     Shader m_sceneShader;
     Shader m_cubeShader;
+    Shader m_wallShader;
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
@@ -228,6 +241,7 @@ private:
     glm::mat4 m_modelMatrix { 1.0f };*/
     Scene m_scene{ config::scene_paths };
     Cube m_cube{ config::scene_paths };
+    Wall m_wall{};
 };
 
 int main()

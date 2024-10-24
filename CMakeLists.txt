@@ -15,7 +15,8 @@ add_executable(Master_TechDemo
 	"src/mesh.cpp"
 	"src/scene.cpp"
 	"src/cube.cpp"
-	"src/camera.cpp")
+	"src/wall.cpp"
+	"src/camera.cpp" "src/light.h")
 
 target_compile_definitions(Master_TechDemo PRIVATE RESOURCE_ROOT="${CMAKE_CURRENT_LIST_DIR}/")
 target_compile_features(Master_TechDemo PRIVATE cxx_std_20)
