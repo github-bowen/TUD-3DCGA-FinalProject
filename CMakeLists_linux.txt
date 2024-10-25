@@ -14,9 +14,7 @@ add_executable(Master_TechDemo
     "src/texture.cpp"
 	"src/mesh.cpp"
 	"src/scene.cpp"
-	"src/cube.cpp"
-	"src/wall.cpp"
-	"src/camera.cpp" "src/light.h")
+	"src/camera.cpp")
 
 target_compile_definitions(Master_TechDemo PRIVATE RESOURCE_ROOT="${CMAKE_CURRENT_LIST_DIR}/")
 target_compile_features(Master_TechDemo PRIVATE cxx_std_20)
@@ -24,10 +22,12 @@ target_link_libraries(Master_TechDemo PRIVATE CGFramework)
 enable_sanitizers(Master_TechDemo)
 set_project_warnings(Master_TechDemo)
 
-## NOTE: Added for GitHub Actions
-find_package(Threads REQUIRED)
-target_link_libraries(Master_TechDemo PRIVATE Threads::Threads)
-## 
+# Ensure to link against the necessary libraries for OpenGL, GLFW, and GLM
+find_package(OpenGL REQUIRED)
+find_package(GLM REQUIRED)
+
+target_link_libraries(Master_TechDemo PRIVATE CGFramework ${OPENGL_LIBRARIES} glfw glm)
+
 
 # Copy all files in the resources folder to the build directory after every successful build.
 add_custom_command(TARGET Master_TechDemo POST_BUILD

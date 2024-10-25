@@ -13,9 +13,6 @@ Texture::Texture(std::filesystem::path filePath)
     // Image class is defined in <framework/image.h>
     Image cpuTexture { filePath };
 
-    
-
-
     // Create a texture on the GPU and bind it for parameter setting
     glGenTextures(1, &m_texture);
     glBindTexture(GL_TEXTURE_2D, m_texture);

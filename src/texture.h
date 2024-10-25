@@ -23,11 +23,7 @@ public:
 
     void bind(GLint textureSlot);
 
-    
-
 private:
     static constexpr GLuint INVALID = 0xFFFFFFFF;
     GLuint m_texture { INVALID };
-
-    
 };
