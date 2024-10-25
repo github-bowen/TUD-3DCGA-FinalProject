@@ -1,0 +1,61 @@
+name: Build and Test on Linux
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: |
+        echo "Installing necessary packages..."
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libgl1-mesa-dev \
+          libglu1-mesa-dev \
+          libglfw3-dev \
+          libxinerama-dev \
+          libxcursor-dev \
+          libxi-dev \
+          libxrandr-dev \
+          libx11-dev \
+          libxext-dev \
+          xvfb  # Added this line to install Xvfb
+
+    - name: Configure project with CMake
+      run: cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CMAKE_LIST_FILE="CMakeLists_linux.txt"
+
+    - name: Build project
+      run: cmake --build build --config Release
+
+    - name: Run the application using Xvfb
+      run: |
+        echo "Starting Xvfb..."
+        Xvfb :99 -screen 0 1024x768x24 &
+        sleep 2  # Wait for Xvfb to start
+        export DISPLAY=:99
+        echo "Running the application..."
+        
+        # Run the application in the background
+        ./build/Master_TechDemo &
+
+        echo "Application is running. You can close it manually when done."
+        
+        # Wait for a manual stop or timeout (for example, 5 minutes)
+        echo "Running for 5 minutes... (You can stop the application manually)"
+        sleep 30  # Adjust the timeout duration as needed
+
+        echo "Stopping Xvfb..."
+        pkill Xvfb
