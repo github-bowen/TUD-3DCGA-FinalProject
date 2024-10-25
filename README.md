@@ -7,10 +7,13 @@
 - **Cube Mapping (Scene Loading)** (10/22/2024)
 
   - Implemented WASD movement in Camera class
-
   - ~~TODO: Bugs after closing the window~~ (Fixed)
+  
+- **Normal mapping**
 
+- **Environment mapping**
 
+  
 
 ## Upcoming Features
 
@@ -22,8 +25,6 @@
   - Use kd (diffuse color).
   - Use ks (specular color).
   - Implement shininess and roughness parameters.
-- [ ] **Normal mapping**
-- [ ] **Environment mapping**
 - [ ] **Smooth paths**:
   - Implement smooth paths using Bézier curves (at least 3 Cubic Bézier curves).
   - Toggle rendering of the Bézier curve on/off.
