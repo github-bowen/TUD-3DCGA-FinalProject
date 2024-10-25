@@ -189,7 +189,8 @@ void Cube::setupCube() {
     glBindVertexArray(0);
 }
 
-void Cube::draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat3& normalModelMatrix, const glm::mat4& view, const glm::vec3& cameraPos, GLuint textureSlot) {
+void Cube::draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat3& normalModelMatrix, const glm::mat4& view, 
+    const glm::mat4& projection, const glm::vec3& cameraPos, GLuint textureSlot) {
 
 
     GLint old_depth_mode;
@@ -201,6 +202,7 @@ void Cube::draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat3& n
     shader.bind();
     glUniformMatrix4fv(shader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(shader.getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(shader.getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix3fv(shader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
     glUniform3fv(shader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
 

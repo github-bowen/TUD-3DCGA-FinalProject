@@ -21,7 +21,8 @@ public:
     Cube(const std::vector<std::string>&);
     ~Cube();
 
-    void draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat3& normalModelMatrix, const glm::mat4& view, const glm::vec3& cameraPos, GLuint);
+    void draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat3& normalModelMatrix, const glm::mat4& view, 
+        const glm::mat4& projection, const glm::vec3& cameraPos, GLuint);
 
 private:
     std::vector<Image> images;

@@ -149,7 +149,8 @@ public:
 
             Camera& currentCamera = m_cameras[config::activeCameraIndex];
             glm::vec3 cameraPos = currentCamera.cameraPos();
-            m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, cameraPos, config::textureSlots.at("cube"));
+            m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, 
+                config::m_projectionMatrix, cameraPos, config::textureSlots.at("cube"));
 
             Light myLight;
             myLight.position = glm::vec3(0.5f, 1.0f, 0.3f); 

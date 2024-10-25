@@ -1,5 +1,6 @@
 #version 410
 
+uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 modelMatrix;
 uniform mat3 normalModelMatrix;
@@ -12,7 +13,8 @@ out vec3 fragPosition;
 
 void main()
 {
+    vec3 offset = vec3(3.0, 0.0, 0.0);
     fragNormal = normalize(normalModelMatrix * normal);
     fragPosition = vec3(modelMatrix * vec4(position, 1.0));
-    gl_Position = view * vec4(fragPosition, 1.0);
+    gl_Position = projection * view * modelMatrix * vec4(position + offset, 1.0);
 }  
