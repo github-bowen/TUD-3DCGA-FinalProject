@@ -24,6 +24,9 @@ DISABLE_WARNINGS_POP()
 #include "config.h"
 #include "scene.h"
 #include "camera.h"
+#include "cube.h"
+#include "wall.h"
+#include "light.h"
 
 class Application {
 public:
@@ -101,6 +104,14 @@ public:
             sceneBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/scene_vert.glsl");
             sceneBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/scene_frag.glsl");
             m_sceneShader = sceneBuilder.build();
+            ShaderBuilder cubeBuilder;
+            cubeBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/cubemap_vert.glsl");
+            cubeBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/cubemap_frag.glsl");
+            m_cubeShader = cubeBuilder.build();
+            ShaderBuilder wallBuilder;
+            wallBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/normalmap_vert.glsl");
+            wallBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/normalmap_frag.glsl");
+            m_wallShader = wallBuilder.build();
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
@@ -135,6 +146,22 @@ public:
             // render scene: remove translation from the view matrix
             glm::mat4 sceneView = glm::mat4(glm::mat3(view));
             m_scene.draw(m_sceneShader, config::m_projectionMatrix, sceneView, config::textureSlots.at("scene"));
+
+            Camera& currentCamera = m_cameras[config::activeCameraIndex];
+            glm::vec3 cameraPos = currentCamera.cameraPos();
+            m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, 
+                config::m_projectionMatrix, cameraPos, config::textureSlots.at("cube"));
+
+            Light myLight;
+            myLight.position = glm::vec3(0.5f, 1.0f, 0.3f); 
+            myLight.color = glm::vec3(1.0f, 1.0f, 1.0f); 
+            myLight.direction = glm::vec3(0.0f, -1.0f, 0.0f); 
+
+            // Assuming you want to rotate around the x-axis by 90 degrees
+            glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around the x-axis
+            model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
+            m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, myLight.position);
 
             for (GPUMesh& mesh : m_meshes) {
                 m_defaultShader.bind();
@@ -206,6 +233,8 @@ private:
     Shader m_defaultShader;
     Shader m_shadowShader;
     Shader m_sceneShader;
+    Shader m_cubeShader;
+    Shader m_wallShader;
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
@@ -217,6 +246,8 @@ private:
     glm::mat4 m_viewMatrix = glm::lookAt(glm::vec3(-1, 1, -1), glm::vec3(0), glm::vec3(0, 1, 0));
     glm::mat4 m_modelMatrix { 1.0f };*/
     Scene m_scene{ config::scene_paths };
+    Cube m_cube{ config::scene_paths };
+    Wall m_wall{};
 };
 
 int main()
