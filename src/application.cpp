@@ -27,6 +27,7 @@ DISABLE_WARNINGS_POP()
 #include "cube.h"
 #include "wall.h"
 #include "light.h"
+#include "robot_arm.h"
 
 class Application {
 public:
@@ -112,6 +113,10 @@ public:
             wallBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/normalmap_vert.glsl");
             wallBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/normalmap_frag.glsl");
             m_wallShader = wallBuilder.build();
+            ShaderBuilder robotBuilder;
+            robotBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/robot_arm_vert.glsl");
+            robotBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/robot_arm_frag.glsl");
+            m_robotShader = robotBuilder.build();
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
@@ -162,6 +167,15 @@ public:
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, myLight.position);
+
+            std::vector<ArmSegment> armSegments{
+                ArmSegment { glm::radians(-50.0f), glm::vec3(1, 1, 3) },
+                ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
+                ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
+            };
+            std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
+            for (const auto& transform : transformMatrices)
+                dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);
 
             for (GPUMesh& mesh : m_meshes) {
                 m_defaultShader.bind();
@@ -229,12 +243,14 @@ private:
     Window m_window;
     Camera m_cameras[2];
 
+
     // Shader for default rendering and for depth rendering
     Shader m_defaultShader;
     Shader m_shadowShader;
     Shader m_sceneShader;
     Shader m_cubeShader;
     Shader m_wallShader;
+    Shader m_robotShader;
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
@@ -248,6 +264,7 @@ private:
     Scene m_scene{ config::scene_paths };
     Cube m_cube{ config::scene_paths };
     Wall m_wall{};
+    ArmSegment dummy;
 };
 
 int main()
