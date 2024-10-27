@@ -28,6 +28,9 @@ DISABLE_WARNINGS_POP()
 #include "wall.h"
 #include "light.h"
 
+std::vector<Light> lights{};
+size_t selectedLightIndex = 0;
+
 class Application {
 public:
     Application()
@@ -38,6 +41,7 @@ public:
             Camera { &m_window, glm::vec3(-1, 10, -1), -glm::vec3(-1, 10, -1) }          // New camera
         }
     {
+        lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
         this->__init_callback();
         this->__init_meshes();
         this->__init_shader();
@@ -57,8 +61,25 @@ public:
 
         ImGui::Text("Select Camera");
         ImGui::ListBox("##cameraList", &config::activeCameraIndex, cameraNames, IM_ARRAYSIZE(cameraNames));
+        //std::cout << "current camera index: " << config::activeCameraIndex << std::endl;
 
-        std::cout << "current camera index: " << config::activeCameraIndex << std::endl;
+        ImGui::Separator();
+        ImGui::Text("Lights");
+
+        std::vector<std::string> itemStrings = {};
+        for (size_t i = 0; i < lights.size(); i++) {
+            auto string = "Light " + std::to_string(i);
+            itemStrings.push_back(string);
+        }
+        std::vector<const char*> itemCStrings = {};
+        for (const auto& string : itemStrings) {
+            itemCStrings.push_back(string.c_str());
+        }
+        int tempSelectedItem = static_cast<int>(selectedLightIndex);
+        if (ImGui::ListBox("Lights", &tempSelectedItem, itemCStrings.data(), (int)itemCStrings.size(), 4)) {
+            selectedLightIndex = static_cast<size_t>(tempSelectedItem);
+        }
+        ImGui::DragFloat3("LightPos", glm::value_ptr(lights[selectedLightIndex].position), 0.01f, -10.0, 10.0, "%.2f");
 
         ImGui::End();
     }
@@ -100,6 +121,10 @@ public:
             //     Visual Studio: PROJECT => Generate Cache for ComputerGraphics
             //     VS Code: ctrl + shift + p => CMake: Configure => enter
             // ....
+            ShaderBuilder lightBuilder;
+            lightBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/light_vertex.glsl");
+            lightBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/light_frag.glsl");
+            m_lightShader = lightBuilder.build();
             ShaderBuilder sceneBuilder;
             sceneBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/scene_vert.glsl");
             sceneBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/scene_frag.glsl");
@@ -152,16 +177,16 @@ public:
             m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, 
                 config::m_projectionMatrix, cameraPos, config::textureSlots.at("cube"));
 
-            Light myLight;
-            myLight.position = glm::vec3(0.5f, 1.0f, 0.3f); 
-            myLight.color = glm::vec3(1.0f, 1.0f, 1.0f); 
-            myLight.direction = glm::vec3(0.0f, -1.0f, 0.0f); 
+            //lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+            for (const Light& light : lights) {
+                light.renderLightSource(m_lightShader, mvpMatrix);
+            }
 
             // Assuming you want to rotate around the x-axis by 90 degrees
             glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around the x-axis
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
-            m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, myLight.position);
+            m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, lights[selectedLightIndex].position);
 
             for (GPUMesh& mesh : m_meshes) {
                 m_defaultShader.bind();
@@ -235,6 +260,7 @@ private:
     Shader m_sceneShader;
     Shader m_cubeShader;
     Shader m_wallShader;
+    Shader m_lightShader;
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
