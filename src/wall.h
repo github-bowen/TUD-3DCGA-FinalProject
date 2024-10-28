@@ -25,6 +25,8 @@ public:
 
 private:
     //std::vector<Image> images;
+    unsigned int diffuseMap;
+    unsigned int normalMap;
     GLuint m_quad_vao, m_quad_vbo;
 
     void setupWall();

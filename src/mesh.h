@@ -17,12 +17,34 @@ struct MeshLoadingException : public std::runtime_error {
 
 // Alignment directives are to comply with std140 alignment requirements (https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)#Memory_layout)
 struct GPUMaterial {
+    GPUMaterial() = default;
     GPUMaterial(const Material& material);
 
     alignas(16) glm::vec3 kd{ 1.0f };
 	alignas(16) glm::vec3 ks{ 0.0f };
+    alignas(16) glm::vec3 albedo{ 1.0f };
+    float roughness{ 1.0f };
+    float metallic{ 0.0f };
+    float ao{ 1.0f };
 	float shininess{ 1.0f };
 	float transparency{ 1.0f };
+
+    GLuint ubo = 0;  // 新增，用于存储材质的 UBO ID
+
+    // 初始化 UBO
+    void initUBO() {
+        glGenBuffers(1, &ubo);
+        glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(GPUMaterial), this, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
+
+    // 更新材质数据到 UBO
+    void updateUBO() {
+        glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GPUMaterial), this);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
 };
 
 class GPUMesh {
@@ -45,6 +67,8 @@ public:
 
     // Bind VAO and call glDrawElements.
     void draw(const Shader& drawingShader);
+
+    GPUMaterial material;
 
 private:
     void moveInto(GPUMesh&&);
