@@ -9,17 +9,24 @@ DISABLE_WARNINGS_POP()
 GPUMaterial::GPUMaterial(const Material& material) :
     kd(material.kd),
     ks(material.ks),
+    albedo(material.albedo),
+    roughness(material.roughness),
+    metallic(material.metallic),
+    ao(material.ao),
     shininess(material.shininess),
     transparency(material.transparency)
-{}
+{
+    initUBO();
+}
 
 GPUMesh::GPUMesh(const Mesh& cpuMesh)
+    : material(cpuMesh.material)
 {
     // Create uniform buffer to store mesh material (https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL)
-    GPUMaterial gpuMaterial(cpuMesh.material);
-    glGenBuffers(1, &m_uboMaterial);
+    //GPUMaterial gpuMaterial(cpuMesh.material);
+    /*glGenBuffers(1, &m_uboMaterial);
     glBindBuffer(GL_UNIFORM_BUFFER, m_uboMaterial);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(GPUMaterial), &gpuMaterial, GL_STATIC_READ);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(GPUMaterial), &gpuMaterial, GL_STATIC_READ);*/
 
     // Figure out if this mesh has texture coordinates
     m_hasTextureCoords = static_cast<bool>(cpuMesh.material.kdTexture);
@@ -92,7 +99,7 @@ void GPUMesh::draw(const Shader& drawingShader)
 {
     // Bind material data uniform (we assume that the uniform buffer objects is always called 'Material')
     // Yes, we could define the binding inside the shader itself, but that would break on OpenGL versions below 4.2
-    drawingShader.bindUniformBlock("Material", 0, m_uboMaterial);
+    drawingShader.bindUniformBlock("Material", 0, material.ubo);
     
     // Draw the mesh's triangles
     glBindVertexArray(m_vao);
@@ -108,6 +115,8 @@ void GPUMesh::moveInto(GPUMesh&& other)
     m_vbo = other.m_vbo;
     m_vao = other.m_vao;
     m_uboMaterial = other.m_uboMaterial;
+
+    material = std::move(other.material);
 
     other.m_numIndices = 0;
     other.m_hasTextureCoords = other.m_hasTextureCoords;

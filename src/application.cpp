@@ -81,6 +81,19 @@ public:
         }
         ImGui::DragFloat3("LightPos", glm::value_ptr(lights[selectedLightIndex].position), 0.01f, -10.0, 10.0, "%.2f");
 
+        ImGui::Separator();
+        ImGui::Text("Material Properties");
+
+        // 假设第一个 `GPUMesh` 的材质作为示例
+        GPUMaterial& material = m_meshes[0].material;
+
+        // 使用 ImGui 控件来修改材质属性
+        ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
+        ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
+        ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
+        ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
+        material.updateUBO();
+
         ImGui::End();
     }
 
@@ -137,6 +150,10 @@ public:
             wallBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/normalmap_vert.glsl");
             wallBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/normalmap_frag.glsl");
             m_wallShader = wallBuilder.build();
+            ShaderBuilder pbrBuilder;
+            pbrBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shader_vert.glsl");
+            pbrBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/pbr_frag.glsl");
+            m_pbrShader = pbrBuilder.build();
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
@@ -188,22 +205,34 @@ public:
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, lights[selectedLightIndex].position);
 
+            m_pbrShader.bind();
+            glUniform3fv(m_pbrShader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
+
+            int numLights = static_cast<int>(lights.size());
+            glUniform1i(m_pbrShader.getUniformLocation("numLights"), numLights);
+            for (size_t i = 0; i < lights.size(); i++) {
+                std::string lightPosName = "lights[" + std::to_string(i) + "].position";
+                std::string lightColorName = "lights[" + std::to_string(i) + "].color";
+                std::string lightDirName = "lights[" + std::to_string(i) + "].direction";
+                glUniform3fv(m_pbrShader.getUniformLocation(lightPosName.c_str()), 1, glm::value_ptr(lights[i].position));
+                glUniform3fv(m_pbrShader.getUniformLocation(lightColorName.c_str()), 1, glm::value_ptr(lights[i].color));
+                glUniform3fv(m_pbrShader.getUniformLocation(lightDirName.c_str()), 1, glm::value_ptr(lights[i].direction));
+            }
             for (GPUMesh& mesh : m_meshes) {
-                m_defaultShader.bind();
-                glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+                glUniformMatrix4fv(m_pbrShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
                 //Uncomment this line when you use the modelMatrix (or fragmentPosition)
                 //glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
-                glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+                glUniformMatrix3fv(m_pbrShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
                 if (mesh.hasTextureCoords()) {
                     m_texture.bind(config::textureSlots.at("mesh"));
-                    glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
-                    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
-                    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
+                    glUniform1i(m_pbrShader.getUniformLocation("colorMap"), 0);
+                    glUniform1i(m_pbrShader.getUniformLocation("hasTexCoords"), GL_TRUE);
+                    glUniform1i(m_pbrShader.getUniformLocation("useMaterial"), GL_FALSE);
                 } else {
-                    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
-                    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
+                    glUniform1i(m_pbrShader.getUniformLocation("hasTexCoords"), GL_FALSE);
+                    glUniform1i(m_pbrShader.getUniformLocation("useMaterial"), m_useMaterial);
                 }
-                mesh.draw(m_defaultShader);
+                mesh.draw(m_pbrShader);
             }
 
             // Processes input and swaps the window buffer
@@ -261,6 +290,7 @@ private:
     Shader m_cubeShader;
     Shader m_wallShader;
     Shader m_lightShader;
+    Shader m_pbrShader;
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
