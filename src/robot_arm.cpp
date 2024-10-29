@@ -55,7 +55,7 @@ std::vector<glm::mat4> ArmSegment::computeTransformMatrix(const std::vector<ArmS
         glm::mat4 matrix = glm::identity<glm::mat4>();
         glm::mat4 scale = scaleMatrix(armSegment.boxSize);
         rotate = rotationMatrix(armSegment.rotationX, axis) * rotate;
-        glm::mat4 originM = translationMatrix({ -0.5 * armSegment.boxSize.x,-0.5 * armSegment.boxSize.y,0 });
+        // glm::mat4 originM = translationMatrix({ -0.5 * armSegment.boxSize.x,-0.5 * armSegment.boxSize.y,0 });
         glm::mat4 translationall = glm::identity<glm::mat4>();
         float translateangle = 0.0;
 
@@ -66,7 +66,7 @@ std::vector<glm::mat4> ArmSegment::computeTransformMatrix(const std::vector<ArmS
         }
         seglist.push_back(armSegment);
 
-        matrix = translationall * rotate * originM * scale;
+        matrix = translationall * rotate * scale;
 
 
         transforms.push_back(matrix);
@@ -81,47 +81,47 @@ void ArmSegment::setupArmSegment() {
     // Define the vertices for a cube
     float vertices[] = {
         // positions          // normals
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
 
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  1.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  1.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  1.0f, -1.0f,  0.0f,  0.0f,
 
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  1.0f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.0f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.0f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.0f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  1.0f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  1.0f,  1.0f,  0.0f,  0.0f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.0f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.0f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  1.0f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  1.0f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  1.0f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.0f,  0.0f, -1.0f,  0.0f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+        -0.5f,  0.5f, -0.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  1.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  1.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.0f,  0.0f,  1.0f,  0.0f
     };
 
 
