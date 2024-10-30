@@ -7,6 +7,7 @@ out vec4 FragColor;
 in vec3 fragPosition;
 in vec3 fragNormal;
 in vec2 fragTexCoord;
+in mat3 TBN;
 
 layout(std140) uniform Material // Must match the GPUMaterial defined in src/mesh.h
 {
@@ -19,6 +20,17 @@ layout(std140) uniform Material // Must match the GPUMaterial defined in src/mes
     float shininess;
 	float transparency;
 };
+
+uniform sampler2D normalMap;
+uniform sampler2D albedoMap;
+uniform sampler2D roughnessMap;
+uniform sampler2D metallicMap;
+uniform sampler2D aoMap;
+uniform bool normalMapping;
+uniform bool albedoTex;
+uniform bool roughnessTex;
+uniform bool metallicTex;
+uniform bool aoTex;
 
 struct Light{
     vec3 position;
@@ -73,8 +85,22 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 
 void main()
 {
-    vec3 N = normalize(fragNormal); 
+    vec3 N = normalize(fragNormal);
+    if(normalMapping){
+        N = texture(normalMap, fragTexCoord).rgb;
+        N = N*2.0 - 1.0;
+        N = normalize(TBN * N);
+    }
     vec3 V = normalize(cameraPos - fragPosition);
+    vec3 localAlbedo = albedo;
+    float localRoughness = roughness;
+    float localMetallic = metallic;
+    float localAo = ao;
+
+    if(albedoTex){localAlbedo = pow(texture(albedoMap, fragTexCoord).rgb, vec3(2.2));}
+    if(roughnessTex){localRoughness = texture(roughnessMap, fragTexCoord).r;}
+    if(metallicTex){localMetallic = texture(metallicMap, fragTexCoord).r;}
+    if(aoTex){localAo = texture(aoMap, fragTexCoord).r;}
 
     vec3 specula = vec3(1.0);
     vec3 Lo = vec3(0.0);
@@ -87,25 +113,25 @@ void main()
         vec3 radiance = lights[i].color * attenuation;
 
         vec3 F0 = vec3(0.04); 
-        F0 = mix(F0, albedo, metallic);
+        F0 = mix(F0, localAlbedo, localMetallic);
 
-        float NDF = DistributionGGX(N, H, roughness);        
-        float G = GeometrySmith(N, V, L, roughness);      
+        float NDF = DistributionGGX(N, H, localRoughness);        
+        float G = GeometrySmith(N, V, L, localRoughness);      
         vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);       
         
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - metallic;
+        kD *= 1.0 - localMetallic;
         
         vec3 numerator = NDF * G * F;
         float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
         vec3 specular = numerator / denominator;  
         
         float NdotL = max(dot(N, L), 0.0);                
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
+        Lo += (kD * localAlbedo / PI + specular) * radiance * NdotL; 
     }
 
-    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 ambient = vec3(0.03) * localAlbedo * localAo;
     vec3 color = ambient + Lo;
 
     color = color / (color + vec3(1.0));

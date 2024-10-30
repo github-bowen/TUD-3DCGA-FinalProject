@@ -15,6 +15,8 @@ struct Vertex {
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec2 texCoord; // Texture coordinate
+	glm::vec3 tangent;
+	glm::vec3 bitangent;
 
 	[[nodiscard]] constexpr bool operator==(const Vertex&) const noexcept = default;
 };
@@ -25,7 +27,7 @@ struct Material {
 	glm::vec3 albedo{ 1.0f };
 	float roughness{ 1.0f };
 	float metallic{ 0.0f };
-	float ao{ 1.0f };
+	float ao{ 0.3f };
 	float shininess{ 1.0f };
 	float transparency{ 1.0f };
 
@@ -44,10 +46,11 @@ struct Mesh {
 	std::vector<glm::uvec3> triangles;
 
 	Material material;
+	void calculateTan();
 };
 
 [[nodiscard]] std::vector<Mesh> loadMesh(const std::filesystem::path& file, bool normalize = false);
-[[nodiscard]] Mesh mergeMeshes(std::span<const Mesh> meshes);
+[[nodiscard]] Mesh mergeMeshes(std::span<Mesh> meshes);
 void meshFlipX(Mesh& mesh);
 void meshFlipY(Mesh& mesh);
 void meshFlipZ(Mesh& mesh);

@@ -31,6 +31,12 @@ DISABLE_WARNINGS_POP()
 std::vector<Light> lights{};
 size_t selectedLightIndex = 0;
 
+bool albedoTex = false;
+bool roughnessTex = false;
+bool metallicTex = false;
+bool aoTex = false;
+bool normalMapping = false;
+
 class Application {
 public:
     Application()
@@ -88,9 +94,14 @@ public:
         GPUMaterial& material = m_meshes[0].material;
 
         // 使用 ImGui 控件来修改材质属性
+        ImGui::Checkbox("Normal Mapping", &normalMapping);
+        ImGui::Checkbox("Albedo Texture", &albedoTex);
         ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
+        ImGui::Checkbox("Roughness Texture", &roughnessTex);
         ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
+        ImGui::Checkbox("Metallic Texture", &metallicTex);
         ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
+        ImGui::Checkbox("Ao Texture", &aoTex);
         ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
         material.updateUBO();
 
@@ -231,6 +242,12 @@ public:
                 } else {
                     glUniform1i(m_pbrShader.getUniformLocation("hasTexCoords"), GL_FALSE);
                     glUniform1i(m_pbrShader.getUniformLocation("useMaterial"), m_useMaterial);
+                    
+                    glUniform1i(m_pbrShader.getUniformLocation("normalMapping"), normalMapping);
+                    glUniform1i(m_pbrShader.getUniformLocation("albedoTex"), albedoTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("roughnessTex"), roughnessTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("metallicTex"), metallicTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("aoTex"), aoTex);
                 }
                 mesh.draw(m_pbrShader);
             }
