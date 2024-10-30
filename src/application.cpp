@@ -29,20 +29,21 @@ DISABLE_WARNINGS_POP()
 #include "light.h"
 #include "robot_arm.h"
 
+
 class Application {
 public:
     Application()
         : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
-        , m_texture(RESOURCE_ROOT TEXTURE_PATH), 
-        m_cameras {
+        , m_texture(RESOURCE_ROOT TEXTURE_PATH),
+        m_cameras{
             Camera { &m_window, glm::vec3(1.2f, 1.1f, 0.9f), -glm::vec3(1.2f, 1.1f, 0.9f) }, // Main camera
             Camera { &m_window, glm::vec3(-1, 10, -1), -glm::vec3(-1, 10, -1) }          // New camera
+        }      
+        {
+            this->__init_callback();
+            this->__init_meshes();
+            this->__init_shader();
         }
-    {
-        this->__init_callback();
-        this->__init_meshes();
-        this->__init_shader();
-    }
 
     void imgui() {
 
@@ -58,6 +59,27 @@ public:
 
         ImGui::Text("Select Camera");
         ImGui::ListBox("##cameraList", &config::activeCameraIndex, cameraNames, IM_ARRAYSIZE(cameraNames));
+
+        ImGui::Text("Arm Segment Controls");
+        ImGui::Checkbox("Animate", &animate);
+        for (size_t i = 0; i < armSegments.size(); ++i) {
+            ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
+
+            ImGui::Text("Segment %zu", i + 1);
+
+            // RotateX Slider - Convert angle to degrees for user-friendly adjustment
+            float rotateXDegrees = glm::degrees(armSegments[i].rotationX);
+            if (ImGui::SliderFloat("Rotation (degrees)", &rotateXDegrees, -360.0f, 360.0f)) {
+                armSegments[i].rotationX = glm::radians(rotateXDegrees);
+            }
+
+            // Size Sliders - Allow individual adjustment of each component
+            ImGui::SliderFloat3("Size", &armSegments[i].boxSize[0], 0.1f, 5.0f);
+
+            ImGui::Separator(); // Add a separator between each segment control
+            ImGui::PopID();
+        }
+        
 
         //std::cout << "current camera index: " << config::activeCameraIndex << std::endl;
 
@@ -170,43 +192,65 @@ public:
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, myLight.position);
 
-            std::vector<ArmSegment> armSegments{
+            /*std::vector<ArmSegment> armSegments{
                 ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
                 ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
                 ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
-            };
+            };*/
             /*std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
             for (const auto& transform : transformMatrices)
                 dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);*/
             
 
-            static float lastFrameTime = glfwGetTime();
-            float currentFrameTime = glfwGetTime();
-            float deltaTime = currentFrameTime - lastFrameTime;
-            lastFrameTime = currentFrameTime;
+            static bool wasAnimating = false;
 
-           
-            
-            /*for (auto& segment : armSegments) {
-                segment.animate(deltaTime);  
+            if (animate) {
+                
+                static float lastFrameTime = glfwGetTime();
+                static float elapsedTime = 0.0f;
+
+                // Detect when 'animate' is switched to true and reset elapsedTime
+                if (!wasAnimating) {
+                    elapsedTime = 0.0f;  // Reset the elapsed time when animation starts
+                    wasAnimating = true; // Mark that we are now animating
+                }
+
+                float currentFrameTime = glfwGetTime();
+                float deltaTime = currentFrameTime - lastFrameTime;
+                lastFrameTime = currentFrameTime;
+
+                // Animation sequence
+                if (elapsedTime < 5.0f) {
+                    elapsedTime += deltaTime;
+                    armSegments[0].animate(deltaTime * 20);
+                }
+                else if (elapsedTime >= 5.0f && elapsedTime < 10.0f) {
+                    elapsedTime += deltaTime;
+                    armSegments[1].animate(deltaTime * 20);
+                }
+                else if (elapsedTime >= 10.0f && elapsedTime < 15.0f) {
+                    elapsedTime += deltaTime;
+                    armSegments[2].animate(deltaTime * 20);
+                }
+                else {
+                    elapsedTime = 0.0f; // Reset the sequence after all segments have animated
+                }
+
                 std::vector<glm::mat4> transforms = dummy.computeTransformMatrix(armSegments);
-
                 for (size_t i = 0; i < transforms.size(); ++i) {
                     dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transforms[i]);
                 }
-                
-            }*/
+            }
+            else {
+                // Reset wasAnimating flag when 'animate' is false
+                wasAnimating = false;
 
-            
-            armSegments[0].animate(deltaTime * 20);
-            std::cout << "Current rotationX: " << armSegments[0].rotationX << std::endl;
-            std::vector<glm::mat4> transforms = dummy.computeTransformMatrix(armSegments);
-
-            for (size_t i = 0; i < transforms.size(); ++i) {
-                dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transforms[i]);
+                std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
+                for (const auto& transform : transformMatrices) {
+                    dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);
+                }
             }
 
-             
 
                 
 
@@ -298,6 +342,12 @@ private:
     Cube m_cube{ config::scene_paths };
     Wall m_wall{};
     ArmSegment dummy;
+    std::vector<ArmSegment> armSegments{
+        ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
+        ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
+        ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
+    };
+    bool animate{ false };
 };
 
 int main()

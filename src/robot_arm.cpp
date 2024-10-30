@@ -171,11 +171,33 @@ void ArmSegment::draw(Shader& shader, const glm::mat4& modelMatrix, const glm::m
 
 }
 
+//void ArmSegment::animate(float deltaTime) {
+//    float rotationSpeed = 10.0f;  
+//    rotationX += glm::radians(rotationSpeed) * deltaTime;
+//
+//    if (rotationX >= 2 * glm::pi<float>()) rotationX -= 2 * glm::pi<float>();
+//    if (rotationX < -2 * glm::pi<float>()) rotationX += 2 * glm::pi<float>();
+//    
+//}
 void ArmSegment::animate(float deltaTime) {
-    float rotationSpeed = 10.0f;  
-    rotationX += glm::radians(rotationSpeed) * deltaTime;
+    static float rotationSpeed = 10.0f;  
+    static bool rotationDirection = true;  
 
-    if (rotationX >= 2 * glm::pi<float>()) rotationX -= 2 * glm::pi<float>();
-    if (rotationX < -2 * glm::pi<float>()) rotationX += 2 * glm::pi<float>();
     
+    if (rotationDirection) {
+        rotationX += glm::radians(rotationSpeed) * deltaTime;
+        
+        if (rotationX >= glm::radians(90.0f)) {
+            rotationX = glm::radians(90.0f);  
+            rotationDirection = false;  
+        }
+    }
+    else {
+        rotationX -= glm::radians(rotationSpeed) * deltaTime;
+        
+        if (rotationX <= glm::radians(-90.0f)) {
+            rotationX = glm::radians(-90.0f); 
+            rotationDirection = true;  
+        }
+    }
 }
