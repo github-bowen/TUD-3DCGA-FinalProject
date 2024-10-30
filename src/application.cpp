@@ -59,7 +59,7 @@ public:
         ImGui::Text("Select Camera");
         ImGui::ListBox("##cameraList", &config::activeCameraIndex, cameraNames, IM_ARRAYSIZE(cameraNames));
 
-        std::cout << "current camera index: " << config::activeCameraIndex << std::endl;
+        //std::cout << "current camera index: " << config::activeCameraIndex << std::endl;
 
         ImGui::End();
     }
@@ -126,6 +126,8 @@ public:
     void update()
     {
         int dummyInteger = 0; // Initialized to 0
+
+
         while (!m_window.shouldClose()) {
             // This is your game loop
             // Put your real-time logic and rendering in here
@@ -169,13 +171,44 @@ public:
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, myLight.position);
 
             std::vector<ArmSegment> armSegments{
-                ArmSegment { glm::radians(-50.0f), glm::vec3(1, 1, 3) },
+                ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
                 ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
                 ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
             };
-            std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
+            /*std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
             for (const auto& transform : transformMatrices)
-                dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);
+                dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);*/
+            
+
+            static float lastFrameTime = glfwGetTime();
+            float currentFrameTime = glfwGetTime();
+            float deltaTime = currentFrameTime - lastFrameTime;
+            lastFrameTime = currentFrameTime;
+
+           
+            
+            /*for (auto& segment : armSegments) {
+                segment.animate(deltaTime);  
+                std::vector<glm::mat4> transforms = dummy.computeTransformMatrix(armSegments);
+
+                for (size_t i = 0; i < transforms.size(); ++i) {
+                    dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transforms[i]);
+                }
+                
+            }*/
+
+            
+            armSegments[0].animate(deltaTime * 20);
+            std::cout << "Current rotationX: " << armSegments[0].rotationX << std::endl;
+            std::vector<glm::mat4> transforms = dummy.computeTransformMatrix(armSegments);
+
+            for (size_t i = 0; i < transforms.size(); ++i) {
+                dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transforms[i]);
+            }
+
+             
+
+                
 
             for (GPUMesh& mesh : m_meshes) {
                 m_defaultShader.bind();

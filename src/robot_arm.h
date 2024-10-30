@@ -34,6 +34,7 @@ public:
     glm::mat4 scaleMatrix(const glm::vec3& scale);
     std::vector<glm::mat4> computeTransformMatrix(const std::vector<ArmSegment>& armSegments);
     void draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& transform);
+    void animate(float deltaTime);
 
     glm::vec3 boxSize; // Dimensions of the arm segment
     float rotationX { 0.0f };   // Rotation angle around X-axis
@@ -42,6 +43,6 @@ private:
 
     GLuint m_robot_vao, m_robot_vbo;
     void setupArmSegment(); 
-
+    
     
 };
