@@ -120,7 +120,7 @@ void GPUMesh::draw(const Shader& drawingShader)
     // Bind material data uniform (we assume that the uniform buffer objects is always called 'Material')
     // Yes, we could define the binding inside the shader itself, but that would break on OpenGL versions below 4.2
     drawingShader.bindUniformBlock("Material", 0, material.ubo);
-    
+
     albedoMap->bind(GL_TEXTURE5);
     glUniform1i(drawingShader.getUniformLocation("albedoMap"), 5);
     roughnessMap->bind(GL_TEXTURE6);

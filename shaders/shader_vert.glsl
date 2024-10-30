@@ -1,11 +1,5 @@
 #version 410
 
-struct Light{
-    vec3 position;
-    vec3 color;
-    vec3 direction;
-};
-
 uniform mat4 mvpMatrix;
 uniform mat4 modelMatrix;
 // Normals should be transformed differently than positions:

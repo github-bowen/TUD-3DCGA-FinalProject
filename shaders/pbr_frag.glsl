@@ -1,6 +1,6 @@
 #version 410
 
-#define MAX_LIGHTS 100
+#define MAX_LIGHTS 10
 const float PI = 3.14159265359;
 
 out vec4 FragColor;

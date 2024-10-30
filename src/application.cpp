@@ -48,6 +48,8 @@ public:
         }
     {
         lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+        lights.push_back(Light(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+        lights.push_back(Light(glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
         this->__init_callback();
         this->__init_meshes();
         this->__init_shader();
@@ -114,7 +116,37 @@ public:
                 onKeyPressed(key, mods);
             else if (action == GLFW_RELEASE)
                 onKeyReleased(key, mods);
-            });
+
+            if (key == '\\' && action == GLFW_PRESS) {
+                config::show_imgui = !config::show_imgui;
+            }
+            const bool shiftPressed = m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT) || m_window.isKeyPressed(GLFW_KEY_RIGHT_SHIFT);
+            if (action != GLFW_RELEASE)
+                return;
+            switch (key) {
+            case GLFW_KEY_L: {
+                Camera& currentView = m_cameras[config::activeCameraIndex];
+                glm::vec3 newLightPos = currentView.cameraPos();
+                if (shiftPressed)
+                    lights.push_back(Light{ newLightPos, glm::vec3(1), glm::vec3(0) });
+                else
+                    lights[selectedLightIndex].position = newLightPos;
+                return;
+            }
+            case GLFW_KEY_K: {
+                if (!lights.empty() && selectedLightIndex >= 0 && selectedLightIndex < lights.size()) {
+                    lights.erase(lights.begin() + selectedLightIndex);
+
+                    if (selectedLightIndex >= lights.size()) {
+                        selectedLightIndex = lights.size() - 1;
+                    }
+                }
+                return;
+            }
+            default:
+                return;
+            };
+        });
         m_window.registerMouseMoveCallback(std::bind(&Application::onMouseMove, this, std::placeholders::_1));
         m_window.registerMouseButtonCallback([this](int button, int action, int mods) {
             if (action == GLFW_PRESS)
@@ -189,6 +221,7 @@ public:
 
             // ...
             glEnable(GL_DEPTH_TEST);
+            //glEnable(GL_BLEND);
 
             const glm::mat4 view = m_cameras[config::activeCameraIndex].viewMatrix();
             const glm::mat4 mvpMatrix = config::m_projectionMatrix * view * config::m_modelMatrix;
@@ -205,11 +238,6 @@ public:
             m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, 
                 config::m_projectionMatrix, cameraPos, config::textureSlots.at("cube"));
 
-            //lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
-            for (const Light& light : lights) {
-                light.renderLightSource(m_lightShader, mvpMatrix);
-            }
-
             // Assuming you want to rotate around the x-axis by 90 degrees
             glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around the x-axis
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -219,7 +247,7 @@ public:
             m_pbrShader.bind();
             glUniform3fv(m_pbrShader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
 
-            int numLights = static_cast<int>(lights.size());
+            int numLights = lights.size();
             glUniform1i(m_pbrShader.getUniformLocation("numLights"), numLights);
             for (size_t i = 0; i < lights.size(); i++) {
                 std::string lightPosName = "lights[" + std::to_string(i) + "].position";
@@ -252,6 +280,9 @@ public:
                 mesh.draw(m_pbrShader);
             }
 
+            for (const Light& light : lights) {
+                light.renderLightSource(m_lightShader, mvpMatrix);
+            }
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
         }
