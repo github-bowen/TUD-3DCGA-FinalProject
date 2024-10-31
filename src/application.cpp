@@ -61,6 +61,7 @@ public:
         ImGui::ListBox("##cameraList", &config::activeCameraIndex, cameraNames, IM_ARRAYSIZE(cameraNames));
 
         ImGui::Text("Arm Segment Controls");
+        ImGui::Checkbox("See Robot Arm", &see_robot_arm);
         ImGui::Checkbox("Animate", &animate);
         for (size_t i = 0; i < armSegments.size(); ++i) {
             ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
@@ -201,59 +202,60 @@ public:
             for (const auto& transform : transformMatrices)
                 dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);*/
             
+            if (see_robot_arm) {
+                static bool wasAnimating = false;
 
-            static bool wasAnimating = false;
+                if (animate) {
 
-            if (animate) {
-                
-                static float lastFrameTime = glfwGetTime();
-                static float elapsedTime = 0.0f;
+                    static float lastFrameTime = glfwGetTime();
+                    static float elapsedTime = 0.0f;
 
-                // Detect when 'animate' is switched to true and reset elapsedTime
-                if (!wasAnimating) {
-                    elapsedTime = 0.0f;  // Reset the elapsed time when animation starts
-                    wasAnimating = true; // Mark that we are now animating
-                }
+                    // Detect when 'animate' is switched to true and reset elapsedTime
+                    if (!wasAnimating) {
+                        elapsedTime = 0.0f;  // Reset the elapsed time when animation starts
+                        wasAnimating = true; // Mark that we are now animating
+                    }
 
-                float currentFrameTime = glfwGetTime();
-                float deltaTime = currentFrameTime - lastFrameTime;
-                lastFrameTime = currentFrameTime;
+                    float currentFrameTime = glfwGetTime();
+                    float deltaTime = currentFrameTime - lastFrameTime;
+                    lastFrameTime = currentFrameTime;
 
-                // Animation sequence
-                if (elapsedTime < 5.0f) {
-                    elapsedTime += deltaTime;
-                    armSegments[0].animate(deltaTime * 20);
-                }
-                else if (elapsedTime >= 5.0f && elapsedTime < 10.0f) {
-                    elapsedTime += deltaTime;
-                    armSegments[1].animate(deltaTime * 20);
-                }
-                else if (elapsedTime >= 10.0f && elapsedTime < 15.0f) {
-                    elapsedTime += deltaTime;
-                    armSegments[2].animate(deltaTime * 20);
+                    // Animation sequence
+                    if (elapsedTime < 5.0f) {
+                        elapsedTime += deltaTime;
+                        armSegments[0].animate(deltaTime * 20);
+                    }
+                    else if (elapsedTime >= 5.0f && elapsedTime < 10.0f) {
+                        elapsedTime += deltaTime;
+                        armSegments[1].animate(deltaTime * 20);
+                    }
+                    else if (elapsedTime >= 10.0f && elapsedTime < 15.0f) {
+                        elapsedTime += deltaTime;
+                        armSegments[2].animate(deltaTime * 20);
+                    }
+                    else {
+                        elapsedTime = 0.0f; // Reset the sequence after all segments have animated
+                    }
+
+                    std::vector<glm::mat4> transforms = dummy.computeTransformMatrix(armSegments);
+                    for (size_t i = 0; i < transforms.size(); ++i) {
+                        dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transforms[i]);
+                    }
                 }
                 else {
-                    elapsedTime = 0.0f; // Reset the sequence after all segments have animated
-                }
+                    // Reset wasAnimating flag when 'animate' is false
+                    wasAnimating = false;
 
-                std::vector<glm::mat4> transforms = dummy.computeTransformMatrix(armSegments);
-                for (size_t i = 0; i < transforms.size(); ++i) {
-                    dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transforms[i]);
-                }
-            }
-            else {
-                // Reset wasAnimating flag when 'animate' is false
-                wasAnimating = false;
-
-                std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
-                for (const auto& transform : transformMatrices) {
-                    dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);
+                    std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
+                    for (const auto& transform : transformMatrices) {
+                        dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);
+                    }
                 }
             }
 
 
                 
-
+           
             for (GPUMesh& mesh : m_meshes) {
                 m_defaultShader.bind();
                 glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
@@ -270,6 +272,11 @@ public:
                     glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
                 }
                 mesh.draw(m_defaultShader);
+            }
+
+            GLenum error = glGetError();
+            if (error != GL_NO_ERROR) {
+                std::cout << "OpenGL error: " << error << std::endl;
             }
 
             // Processes input and swaps the window buffer
@@ -348,6 +355,7 @@ private:
         ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
     };
     bool animate{ false };
+    bool see_robot_arm{ false };
 };
 
 int main()
