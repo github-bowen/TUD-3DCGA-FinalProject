@@ -13,25 +13,26 @@
 
 - **Environment mapping**
 
-- **Advanced shading**:
-  - Include complex material models (PBR shaders);
-  - Textured PBR (Integrated with Normal mapping);
-  - TODO: Add more lights, Texture editable from UI.
+- **Shading**:
+  - Simple shading: Lambert + Blinn-Phong;
+  - Advanced shading: Textured PBR;
+  - All with normal mapping.
+  
+- **Material textures**:
+  - kd, ks, and shininess for simple shading;
+  - Albedo, roughness, metallic, and ambient occlusion for PBR.
+ 
+- **Hierarchical transformations**:
+  - Animated robot arm with several components.
+  - Animation is done via code (not imported from external software).
 
 ## Upcoming Features
 
 ### Minimal Features
 
-- [ ] **Material textures**:
-  - Use kd (diffuse color).
-  - Use ks (specular color).
-  - Implement shininess and roughness parameters.
 - [ ] **Smooth paths**:
   - Implement smooth paths using Bézier curves (at least 3 Cubic Bézier curves).
   - Toggle rendering of the Bézier curve on/off.
-- [ ] **Hierarchical transformations**:
-  - Animate an object with several components (e.g., robot arm, snake, solar system, or vehicle).
-  - Ensure animation is done via code (not imported from external software).
 
 ### Extra Features (Optional)
 
