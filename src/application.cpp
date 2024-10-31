@@ -119,7 +119,7 @@ public:
         if (!config::show_imgui)
             return;
 
-        ImGui::Begin("UI Panel 1");
+        ImGui::Begin("Assignment 2");
         // ImGui::InputInt("This is an integer input", &dummyInteger); // Use ImGui::DragInt or ImGui::DragFloat for larger range of numbers.
         // ImGui::Text("Value is: %i", dummyInteger); // Use C printf formatting rules (%i is a signed integer)
         ImGui::Checkbox("Use material if no texture", &m_useMaterial);
@@ -254,17 +254,10 @@ public:
         
         
         
-        ImGui::End();
-        ImGui::Begin("UI Panel 2");
+        /*ImGui::End();
+        ImGui::Begin("UI Panel 2");*/
         
         
-
-        ImGui::Separator();
-        ImGui::Text("Arm Segment Controls");
-          ImGui::Checkbox("See Robot Arm", &see_robot_arm);
-          ImGui::Checkbox("Animate", &animate);
-          for (size_t i = 0; i < armSegments.size(); ++i) {
-              ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
 
 		ImGui::Separator();
 		ImGui::Text("Arm Segment Controls");
