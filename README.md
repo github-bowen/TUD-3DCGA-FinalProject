@@ -3,20 +3,17 @@
 ## Implemented Features
 
 - **Multiple Viewpoints** (10/21/2024)
-
 - **Cube Mapping (Scene Loading)** (10/22/2024)
-
   - Implemented WASD movement in Camera class
   - ~~TODO: Bugs after closing the window~~ (Fixed)
-  
 - **Normal mapping**
-
 - **Environment mapping**
-
 - **Advanced shading**:
   - Include complex material models (PBR shaders);
   - Textured PBR (Integrated with Normal mapping);
   - TODO: Add more lights, Texture editable from UI.
+- **Robot Arm Animation**
+- **Bezier Curves (minimal part)**
 
 ## Upcoming Features
 
@@ -26,12 +23,6 @@
   - Use kd (diffuse color).
   - Use ks (specular color).
   - Implement shininess and roughness parameters.
-- [ ] **Smooth paths**:
-  - Implement smooth paths using Bézier curves (at least 3 Cubic Bézier curves).
-  - Toggle rendering of the Bézier curve on/off.
-- [ ] **Hierarchical transformations**:
-  - Animate an object with several components (e.g., robot arm, snake, solar system, or vehicle).
-  - Ensure animation is done via code (not imported from external software).
 
 ### Extra Features (Optional)
 

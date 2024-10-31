@@ -1,7 +1,20 @@
 // bezier_curve.cpp
 #include "bezier_curve.h"
 
-BezierCurve::BezierCurve() = default;
+BezierCurve::BezierCurve() : showBezierPath(true), time(0.0), segments() {
+	setupPath();
+}
+
+BezierCurve::BezierCurve(bool showBezierPath, float time) : showBezierPath(showBezierPath), time(time), segments() {
+    setupPath();
+}
+
+// initialize path with 3 segments
+void BezierCurve::setupPath() {
+	addSegment(glm::vec3(-4.0f, 2.0f, 0.0f), glm::vec3(-6.0f, 4.5f, 6.0f), glm::vec3(3.5f, 6.5f, 2.0f), glm::vec3(6.0f, 5.0f, -5.0f));
+	addSegment(glm::vec3(4.0f, 5.0f, -5.0f), glm::vec3(7.0f, 2.5f, 0.0f), glm::vec3(5.5f, -2.5f, 4.0f), glm::vec3(-3.0f, -4.0f, 8.0f));
+	addSegment(glm::vec3(-3.0f, -4.0f, 8.0f), glm::vec3(5.5f, 2.5f, -3.0f), glm::vec3(-7.5f, 7.5f, -6.0f), glm::vec3(1.0f, 3.0f, -2.0f));
+}
 
 // add one segment of cubic Bezier Curve 
 void BezierCurve::addSegment(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
@@ -20,7 +33,7 @@ void BezierCurve::setSegmentControlPoints(size_t segmentIndex, const glm::vec3& 
 }
 
 // get point on path at given time (time belongs to [0, 1])
-glm::vec3 BezierCurve::getPointOnPath(float time) const {
+glm::vec3 BezierCurve::getPointOnPath() const {
 	if (segments.empty()) return glm::vec3(0.0f);  // return 0 vector if no segments
 
 	// calculate current segment index at given time

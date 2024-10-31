@@ -15,6 +15,8 @@ class BezierCurve {
 public:
     BezierCurve();
 
+    BezierCurve(bool showBezierPath, float time);
+
     // add one segment of cubic Bezier Curve 
     void addSegment(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
 
@@ -22,8 +24,8 @@ public:
     void setSegmentControlPoints(size_t segmentIndex, const glm::vec3& p0, 
         const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
 
-	// get point on path at given time (time belongs to [0, 1])
-    glm::vec3 getPointOnPath(float time) const;
+	// get point on path at given time (this->time belongs to [0, 1])
+    glm::vec3 getPointOnPath() const;
 
 	// get total segment count
     size_t getSegmentCount() const;
@@ -31,13 +33,22 @@ public:
 	// get control points of specified segment
     std::vector<glm::vec3> getSegmentControlPoints(size_t segmentIndex) const;
 
-private:
-	// control points of each segment
+    // control points of each segment
     std::vector<std::vector<glm::vec3>> segments;
+
+    /* ------------------ PUBLIC VARIABLES: UI COMPONENTS ------------------ */
+    bool showBezierPath;
+	float time;  // time value for path point calculation. NOTE: different from t value in each segment
+
+
+
+private:
 
 	// calculate point of cubic Bezier curve
     glm::vec3 calculateCubicBezierPoint(float t, const glm::vec3& p0, 
         const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) const;
+
+	void setupPath();
 };
 
 #endif // BEZIER_CURVE_H

@@ -28,6 +28,7 @@ DISABLE_WARNINGS_POP()
 #include "wall.h"
 #include "light.h"
 #include "robot_arm.h"
+#include "bezier_curve.h"
 
 
 std::vector<Light> lights{};
@@ -43,8 +44,8 @@ class Application {
 public:
     Application()
         : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
-        , m_texture(RESOURCE_ROOT TEXTURE_PATH),
-        m_cameras{
+        , m_texture(RESOURCE_ROOT TEXTURE_PATH), m_bezierCurve(true, 0.0), 
+          m_cameras{
             Camera { &m_window, glm::vec3(1.2f, 1.1f, 0.9f), -glm::vec3(1.2f, 1.1f, 0.9f) }, // Main camera
             Camera { &m_window, glm::vec3(-1, 10, -1), -glm::vec3(-1, 10, -1) }          // New camera
         }      
@@ -68,7 +69,7 @@ public:
         if (!config::show_imgui)
             return;
 
-        ImGui::Begin("Assignment 2");
+        ImGui::Begin("UI Panel 1");
         // ImGui::InputInt("This is an integer input", &dummyInteger); // Use ImGui::DragInt or ImGui::DragFloat for larger range of numbers.
         // ImGui::Text("Value is: %i", dummyInteger); // Use C printf formatting rules (%i is a signed integer)
         ImGui::Checkbox("Use material if no texture", &m_useMaterial);
@@ -140,29 +141,49 @@ public:
         ImGui::Checkbox("Ao Texture", &aoTex);
         ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
         material.updateUBO();
+
+
+		/*ImGui::End();
+        ImGui::Begin("UI Panel 2");*/
       
+
+		ImGui::Separator();
+		ImGui::Text("Arm Segment Controls");
+		ImGui::Checkbox("See Robot Arm", &see_robot_arm);
+		ImGui::Checkbox("Animate", &animate);
+		for (size_t i = 0; i < armSegments.size(); ++i) {
+			ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
+
+			ImGui::Text("Segment %zu", i + 1);
+
+			// RotateX Slider - Convert angle to degrees for user-friendly adjustment
+			float rotateXDegrees = glm::degrees(armSegments[i].rotationX);
+			if (ImGui::SliderFloat("Rotation (degrees)", &rotateXDegrees, -360.0f, 360.0f)) {
+				armSegments[i].rotationX = glm::radians(rotateXDegrees);
+			}
+
+			// Size Sliders - Allow individual adjustment of each component
+			ImGui::SliderFloat3("Size", &armSegments[i].boxSize[0], 0.1f, 5.0f);
+
+			ImGui::Separator(); // Add a separator between each segment control
+			ImGui::PopID();
+		}
+
+        /* Bezier Curve Components*/
         ImGui::Separator();
-        ImGui::Text("Arm Segment Controls");
-          ImGui::Checkbox("See Robot Arm", &see_robot_arm);
-          ImGui::Checkbox("Animate", &animate);
-          for (size_t i = 0; i < armSegments.size(); ++i) {
-              ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
+        ImGui::Text("Bezier Path Controls");
+        ImGui::Checkbox("Show Bezier Path", &m_bezierCurve.showBezierPath);
+        ImGui::SliderFloat("Path Progress [0, 1]", &m_bezierCurve.time, 0.0f, 1.0f);
 
-              ImGui::Text("Segment %zu", i + 1);
-
-              // RotateX Slider - Convert angle to degrees for user-friendly adjustment
-              float rotateXDegrees = glm::degrees(armSegments[i].rotationX);
-              if (ImGui::SliderFloat("Rotation (degrees)", &rotateXDegrees, -360.0f, 360.0f)) {
-                  armSegments[i].rotationX = glm::radians(rotateXDegrees);
-              }
-
-              // Size Sliders - Allow individual adjustment of each component
-              ImGui::SliderFloat3("Size", &armSegments[i].boxSize[0], 0.1f, 5.0f);
-
-              ImGui::Separator(); // Add a separator between each segment control
-              ImGui::PopID();
-          }
-
+		// Display control points for each segment
+        /*for (size_t i = 0; i < m_bezierCurve.getSegmentCount(); ++i) {
+			std::vector<glm::vec3>& segment = m_bezierCurve.segments[i];
+            ImGui::Text("Bezier Curve %zu", i + 1);
+            for (size_t j = 0; j < segment.size(); ++j) {
+                ImGui::SliderFloat3(("Control Point " + std::to_string(j + 1) + "##" + std::to_string(i)).c_str(),
+                    &segment[j].x, -10.0f, 10.0f);
+            }
+        }*/
 
         ImGui::End();
     }
@@ -404,6 +425,9 @@ public:
                 mesh.draw(m_pbrShader);
             }
 
+            // FIXME: directly apply bezier curve at the first light
+			lights[0].position = m_bezierCurve.getPointOnPath();
+
             for (const Light& light : lights) {
                 if(light.color != glm::vec3(0.0))
                     light.renderLightSource(m_lightShader, mvpMatrix);
@@ -495,6 +519,8 @@ private:
     };
     bool animate{ false };
     bool see_robot_arm{ false };
+
+    BezierCurve m_bezierCurve {true, 0.0};
 };
 
 int main()
