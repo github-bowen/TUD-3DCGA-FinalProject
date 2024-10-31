@@ -13,14 +13,15 @@
 
 - **Environment mapping**
 
-  
+- **Advanced shading**:
+  - Include complex material models (PBR shaders);
+  - Textured PBR (Integrated with Normal mapping);
+  - TODO: Add more lights, Texture editable from UI.
 
 ## Upcoming Features
 
 ### Minimal Features
 
-- [ ] **Advanced shading**:
-  - Include complex material models (PBR shaders).
 - [ ] **Material textures**:
   - Use kd (diffuse color).
   - Use ks (specular color).

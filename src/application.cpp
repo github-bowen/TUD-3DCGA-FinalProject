@@ -31,6 +31,12 @@ DISABLE_WARNINGS_POP()
 std::vector<Light> lights{};
 size_t selectedLightIndex = 0;
 
+bool albedoTex = false;
+bool roughnessTex = false;
+bool metallicTex = false;
+bool aoTex = false;
+bool normalMapping = false;
+
 class Application {
 public:
     Application()
@@ -41,7 +47,13 @@ public:
             Camera { &m_window, glm::vec3(-1, 10, -1), -glm::vec3(-1, 10, -1) }          // New camera
         }
     {
-        lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+        lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        lights.push_back(Light(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        lights.push_back(Light(glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        for (int i = 0; i < 7; ++i) {
+            lights.push_back(Light(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+        }
+
         this->__init_callback();
         this->__init_meshes();
         this->__init_shader();
@@ -66,20 +78,43 @@ public:
         ImGui::Separator();
         ImGui::Text("Lights");
 
-        std::vector<std::string> itemStrings = {};
+        std::vector<std::string> onItemStrings;
+        std::vector<size_t> onItemIndices;
+        std::vector<std::string> offItemStrings;
+        std::vector<size_t> offItemIndices;
+
         for (size_t i = 0; i < lights.size(); i++) {
             auto string = "Light " + std::to_string(i);
-            itemStrings.push_back(string);
+            if (glm::length(lights[i].color) > 0.001f) {
+                onItemStrings.push_back(string);
+                onItemIndices.push_back(i);
+            }
+            else {
+                offItemStrings.push_back(string);
+                offItemIndices.push_back(i);
+            }
         }
-        std::vector<const char*> itemCStrings = {};
-        for (const auto& string : itemStrings) {
-            itemCStrings.push_back(string.c_str());
+        std::vector<const char*> onItemCStrings;
+        for (const auto& string : onItemStrings) {
+            onItemCStrings.push_back(string.c_str());
         }
-        int tempSelectedItem = static_cast<int>(selectedLightIndex);
-        if (ImGui::ListBox("Lights", &tempSelectedItem, itemCStrings.data(), (int)itemCStrings.size(), 4)) {
-            selectedLightIndex = static_cast<size_t>(tempSelectedItem);
+        std::vector<const char*> offItemCStrings;
+        for (const auto& string : offItemStrings) {
+            offItemCStrings.push_back(string.c_str());
         }
+        int tempSelectedOnItem = -1;
+        int tempSelectedOffItem = -1;
+        ImGui::Text("On Lights:");
+        if (ImGui::ListBox("##onLightsList", &tempSelectedOnItem, onItemCStrings.data(), (int)onItemCStrings.size(), 3) && tempSelectedOnItem != -1) {
+            selectedLightIndex = onItemIndices[tempSelectedOnItem];
+        }
+        ImGui::Text("Off Lights:");
+        if (ImGui::ListBox("##offLightsList", &tempSelectedOffItem, offItemCStrings.data(), (int)offItemCStrings.size(), 3) && tempSelectedOffItem != -1) {
+            selectedLightIndex = offItemIndices[tempSelectedOffItem];
+        }
+
         ImGui::DragFloat3("LightPos", glm::value_ptr(lights[selectedLightIndex].position), 0.01f, -10.0, 10.0, "%.2f");
+        ImGui::ColorEdit3("LightColor", &lights[selectedLightIndex].color[0]);
 
         ImGui::Separator();
         ImGui::Text("Material Properties");
@@ -88,9 +123,14 @@ public:
         GPUMaterial& material = m_meshes[0].material;
 
         // 使用 ImGui 控件来修改材质属性
+        ImGui::Checkbox("Normal Mapping", &normalMapping);
+        ImGui::Checkbox("Albedo Texture", &albedoTex);
         ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
+        ImGui::Checkbox("Roughness Texture", &roughnessTex);
         ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
+        ImGui::Checkbox("Metallic Texture", &metallicTex);
         ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
+        ImGui::Checkbox("Ao Texture", &aoTex);
         ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
         material.updateUBO();
 
@@ -103,7 +143,30 @@ public:
                 onKeyPressed(key, mods);
             else if (action == GLFW_RELEASE)
                 onKeyReleased(key, mods);
-            });
+
+            if (key == '\\' && action == GLFW_PRESS) {
+                config::show_imgui = !config::show_imgui;
+            }
+            const bool shiftPressed = m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT) || m_window.isKeyPressed(GLFW_KEY_RIGHT_SHIFT);
+            if (action != GLFW_RELEASE)
+                return;
+            switch (key) {
+            case GLFW_KEY_L: {
+                Camera& currentView = m_cameras[config::activeCameraIndex];
+                glm::vec3 newLightPos = currentView.cameraPos();
+                if (shiftPressed) {
+                    lights[selectedLightIndex].position = newLightPos;
+                    if(lights[selectedLightIndex].color == glm::vec3(0.0))
+                        lights[selectedLightIndex].color = glm::vec3(1.0);
+                }
+                else
+                    lights[selectedLightIndex].color = glm::vec3(0.0);
+                return;
+            }
+            default:
+                return;
+            };
+        });
         m_window.registerMouseMoveCallback(std::bind(&Application::onMouseMove, this, std::placeholders::_1));
         m_window.registerMouseButtonCallback([this](int button, int action, int mods) {
             if (action == GLFW_PRESS)
@@ -178,6 +241,7 @@ public:
 
             // ...
             glEnable(GL_DEPTH_TEST);
+            //glEnable(GL_BLEND);
 
             const glm::mat4 view = m_cameras[config::activeCameraIndex].viewMatrix();
             const glm::mat4 mvpMatrix = config::m_projectionMatrix * view * config::m_modelMatrix;
@@ -194,11 +258,6 @@ public:
             m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, 
                 config::m_projectionMatrix, cameraPos, config::textureSlots.at("cube"));
 
-            //lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
-            for (const Light& light : lights) {
-                light.renderLightSource(m_lightShader, mvpMatrix);
-            }
-
             // Assuming you want to rotate around the x-axis by 90 degrees
             glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around the x-axis
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -208,7 +267,7 @@ public:
             m_pbrShader.bind();
             glUniform3fv(m_pbrShader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
 
-            int numLights = static_cast<int>(lights.size());
+            int numLights = lights.size();
             glUniform1i(m_pbrShader.getUniformLocation("numLights"), numLights);
             for (size_t i = 0; i < lights.size(); i++) {
                 std::string lightPosName = "lights[" + std::to_string(i) + "].position";
@@ -216,7 +275,7 @@ public:
                 std::string lightDirName = "lights[" + std::to_string(i) + "].direction";
                 glUniform3fv(m_pbrShader.getUniformLocation(lightPosName.c_str()), 1, glm::value_ptr(lights[i].position));
                 glUniform3fv(m_pbrShader.getUniformLocation(lightColorName.c_str()), 1, glm::value_ptr(lights[i].color));
-                glUniform3fv(m_pbrShader.getUniformLocation(lightDirName.c_str()), 1, glm::value_ptr(lights[i].direction));
+                //glUniform3fv(m_pbrShader.getUniformLocation(lightDirName.c_str()), 1, glm::value_ptr(lights[i].direction));
             }
             for (GPUMesh& mesh : m_meshes) {
                 glUniformMatrix4fv(m_pbrShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
@@ -231,8 +290,23 @@ public:
                 } else {
                     glUniform1i(m_pbrShader.getUniformLocation("hasTexCoords"), GL_FALSE);
                     glUniform1i(m_pbrShader.getUniformLocation("useMaterial"), m_useMaterial);
+                    
+                    glUniform1i(m_pbrShader.getUniformLocation("normalMapping"), normalMapping);
+                    glUniform1i(m_pbrShader.getUniformLocation("albedoTex"), albedoTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("roughnessTex"), roughnessTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("metallicTex"), metallicTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("aoTex"), aoTex);
                 }
                 mesh.draw(m_pbrShader);
+            }
+
+            for (const Light& light : lights) {
+                if(light.color != glm::vec3(0.0))
+                    light.renderLightSource(m_lightShader, mvpMatrix);
+            }
+            GLenum error = glGetError();
+            if (error != GL_NO_ERROR) {
+                std::cout << "OpenGL error: " << error << std::endl;
             }
 
             // Processes input and swaps the window buffer

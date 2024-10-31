@@ -10,6 +10,7 @@ DISABLE_WARNINGS_POP()
 #include <exception>
 #include <filesystem>
 #include <framework/opengl_includes.h>
+#include "texture.h"
 
 struct MeshLoadingException : public std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -25,11 +26,11 @@ struct GPUMaterial {
     alignas(16) glm::vec3 albedo{ 1.0f };
     float roughness{ 1.0f };
     float metallic{ 0.0f };
-    float ao{ 1.0f };
+    float ao{ 0.3f };
 	float shininess{ 1.0f };
 	float transparency{ 1.0f };
 
-    GLuint ubo = 0;  // 新增，用于存储材质的 UBO ID
+    GLuint ubo = 0;
 
     // 初始化 UBO
     void initUBO() {
@@ -45,6 +46,10 @@ struct GPUMaterial {
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GPUMaterial), this);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
+
+    //void initMaps(const std::string& albedoPath) {
+    //    albedoMap = new Texture(albedoPath);
+    //}
 };
 
 class GPUMesh {
@@ -53,6 +58,11 @@ public:
     // Cannot copy a GPU mesh because it would require reference counting of GPU resources.
     GPUMesh(const GPUMesh&) = delete;
     GPUMesh(GPUMesh&&);
+    Texture* normalMap = nullptr;
+    Texture* albedoMap = nullptr;
+    Texture* roughnessMap = nullptr;
+    Texture* metallicMap = nullptr;
+    Texture* aoMap = nullptr;
     ~GPUMesh();
 
     // Generate a number of GPU meshes from a particular model file.
