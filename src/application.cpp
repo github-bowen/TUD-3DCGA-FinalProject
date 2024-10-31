@@ -30,6 +30,15 @@ DISABLE_WARNINGS_POP()
 #include "robot_arm.h"
 
 
+std::vector<Light> lights{};
+size_t selectedLightIndex = 0;
+
+bool albedoTex = false;
+bool roughnessTex = false;
+bool metallicTex = false;
+bool aoTex = false;
+bool normalMapping = false;
+
 class Application {
 public:
     Application()
@@ -45,6 +54,20 @@ public:
             this->__init_shader();
         }
 
+    {
+        lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        lights.push_back(Light(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        lights.push_back(Light(glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        for (int i = 0; i < 7; ++i) {
+            lights.push_back(Light(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+        }
+
+        this->__init_callback();
+        this->__init_meshes();
+        this->__init_shader();
+    }
+
+
     void imgui() {
 
         if (!config::show_imgui)
@@ -59,30 +82,92 @@ public:
 
         ImGui::Text("Select Camera");
         ImGui::ListBox("##cameraList", &config::activeCameraIndex, cameraNames, IM_ARRAYSIZE(cameraNames));
+        //std::cout << "current camera index: " << config::activeCameraIndex << std::endl;
 
-        ImGui::Text("Arm Segment Controls");
-        ImGui::Checkbox("See Robot Arm", &see_robot_arm);
-        ImGui::Checkbox("Animate", &animate);
-        for (size_t i = 0; i < armSegments.size(); ++i) {
-            ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
+        ImGui::Separator();
+        ImGui::Text("Lights");
 
-            ImGui::Text("Segment %zu", i + 1);
+        std::vector<std::string> onItemStrings;
+        std::vector<size_t> onItemIndices;
+        std::vector<std::string> offItemStrings;
+        std::vector<size_t> offItemIndices;
 
-            // RotateX Slider - Convert angle to degrees for user-friendly adjustment
-            float rotateXDegrees = glm::degrees(armSegments[i].rotationX);
-            if (ImGui::SliderFloat("Rotation (degrees)", &rotateXDegrees, -360.0f, 360.0f)) {
-                armSegments[i].rotationX = glm::radians(rotateXDegrees);
+        for (size_t i = 0; i < lights.size(); i++) {
+            auto string = "Light " + std::to_string(i);
+            if (glm::length(lights[i].color) > 0.001f) {
+                onItemStrings.push_back(string);
+                onItemIndices.push_back(i);
             }
-
-            // Size Sliders - Allow individual adjustment of each component
-            ImGui::SliderFloat3("Size", &armSegments[i].boxSize[0], 0.1f, 5.0f);
-
-            ImGui::Separator(); // Add a separator between each segment control
-            ImGui::PopID();
+            else {
+                offItemStrings.push_back(string);
+                offItemIndices.push_back(i);
+            }
         }
-        
+        std::vector<const char*> onItemCStrings;
+        for (const auto& string : onItemStrings) {
+            onItemCStrings.push_back(string.c_str());
+        }
+        std::vector<const char*> offItemCStrings;
+        for (const auto& string : offItemStrings) {
+            offItemCStrings.push_back(string.c_str());
+        }
+        int tempSelectedOnItem = -1;
+        int tempSelectedOffItem = -1;
+        ImGui::Text("On Lights:");
+        if (ImGui::ListBox("##onLightsList", &tempSelectedOnItem, onItemCStrings.data(), (int)onItemCStrings.size(), 3) && tempSelectedOnItem != -1) {
+            selectedLightIndex = onItemIndices[tempSelectedOnItem];
+        }
+        ImGui::Text("Off Lights:");
+        if (ImGui::ListBox("##offLightsList", &tempSelectedOffItem, offItemCStrings.data(), (int)offItemCStrings.size(), 3) && tempSelectedOffItem != -1) {
+            selectedLightIndex = offItemIndices[tempSelectedOffItem];
+        }
+
 
         //std::cout << "current camera index: " << config::activeCameraIndex << std::endl;
+
+        ImGui::DragFloat3("LightPos", glm::value_ptr(lights[selectedLightIndex].position), 0.01f, -10.0, 10.0, "%.2f");
+        ImGui::ColorEdit3("LightColor", &lights[selectedLightIndex].color[0]);
+
+        ImGui::Separator();
+        ImGui::Text("Material Properties");
+
+        // 假设第一个 `GPUMesh` 的材质作为示例
+        GPUMaterial& material = m_meshes[0].material;
+
+        // 使用 ImGui 控件来修改材质属性
+        ImGui::Checkbox("Normal Mapping", &normalMapping);
+        ImGui::Checkbox("Albedo Texture", &albedoTex);
+        ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
+        ImGui::Checkbox("Roughness Texture", &roughnessTex);
+        ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
+        ImGui::Checkbox("Metallic Texture", &metallicTex);
+        ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
+        ImGui::Checkbox("Ao Texture", &aoTex);
+        ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
+        material.updateUBO();
+      
+        ImGui::Separator();
+        ImGui::Text("Arm Segment Controls");
+          ImGui::Checkbox("See Robot Arm", &see_robot_arm);
+          ImGui::Checkbox("Animate", &animate);
+          for (size_t i = 0; i < armSegments.size(); ++i) {
+              ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
+
+              ImGui::Text("Segment %zu", i + 1);
+
+              // RotateX Slider - Convert angle to degrees for user-friendly adjustment
+              float rotateXDegrees = glm::degrees(armSegments[i].rotationX);
+              if (ImGui::SliderFloat("Rotation (degrees)", &rotateXDegrees, -360.0f, 360.0f)) {
+                  armSegments[i].rotationX = glm::radians(rotateXDegrees);
+              }
+
+              // Size Sliders - Allow individual adjustment of each component
+              ImGui::SliderFloat3("Size", &armSegments[i].boxSize[0], 0.1f, 5.0f);
+
+              ImGui::Separator(); // Add a separator between each segment control
+              ImGui::PopID();
+          }
+
 
         ImGui::End();
     }
@@ -93,7 +178,30 @@ public:
                 onKeyPressed(key, mods);
             else if (action == GLFW_RELEASE)
                 onKeyReleased(key, mods);
-            });
+
+            if (key == '\\' && action == GLFW_PRESS) {
+                config::show_imgui = !config::show_imgui;
+            }
+            const bool shiftPressed = m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT) || m_window.isKeyPressed(GLFW_KEY_RIGHT_SHIFT);
+            if (action != GLFW_RELEASE)
+                return;
+            switch (key) {
+            case GLFW_KEY_L: {
+                Camera& currentView = m_cameras[config::activeCameraIndex];
+                glm::vec3 newLightPos = currentView.cameraPos();
+                if (shiftPressed) {
+                    lights[selectedLightIndex].position = newLightPos;
+                    if(lights[selectedLightIndex].color == glm::vec3(0.0))
+                        lights[selectedLightIndex].color = glm::vec3(1.0);
+                }
+                else
+                    lights[selectedLightIndex].color = glm::vec3(0.0);
+                return;
+            }
+            default:
+                return;
+            };
+        });
         m_window.registerMouseMoveCallback(std::bind(&Application::onMouseMove, this, std::placeholders::_1));
         m_window.registerMouseButtonCallback([this](int button, int action, int mods) {
             if (action == GLFW_PRESS)
@@ -124,6 +232,10 @@ public:
             //     Visual Studio: PROJECT => Generate Cache for ComputerGraphics
             //     VS Code: ctrl + shift + p => CMake: Configure => enter
             // ....
+            ShaderBuilder lightBuilder;
+            lightBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/light_vertex.glsl");
+            lightBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/light_frag.glsl");
+            m_lightShader = lightBuilder.build();
             ShaderBuilder sceneBuilder;
             sceneBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/scene_vert.glsl");
             sceneBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/scene_frag.glsl");
@@ -136,10 +248,17 @@ public:
             wallBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/normalmap_vert.glsl");
             wallBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/normalmap_frag.glsl");
             m_wallShader = wallBuilder.build();
+
             ShaderBuilder robotBuilder;
             robotBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/robot_arm_vert.glsl");
             robotBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/robot_arm_frag.glsl");
             m_robotShader = robotBuilder.build();
+
+            ShaderBuilder pbrBuilder;
+            pbrBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shader_vert.glsl");
+            pbrBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/pbr_frag.glsl");
+            m_pbrShader = pbrBuilder.build();
+
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
@@ -166,6 +285,7 @@ public:
 
             // ...
             glEnable(GL_DEPTH_TEST);
+            //glEnable(GL_BLEND);
 
             const glm::mat4 view = m_cameras[config::activeCameraIndex].viewMatrix();
             const glm::mat4 mvpMatrix = config::m_projectionMatrix * view * config::m_modelMatrix;
@@ -182,16 +302,12 @@ public:
             m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, 
                 config::m_projectionMatrix, cameraPos, config::textureSlots.at("cube"));
 
-            Light myLight;
-            myLight.position = glm::vec3(0.5f, 1.0f, 0.3f); 
-            myLight.color = glm::vec3(1.0f, 1.0f, 1.0f); 
-            myLight.direction = glm::vec3(0.0f, -1.0f, 0.0f); 
-
             // Assuming you want to rotate around the x-axis by 90 degrees
             glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around the x-axis
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
-            m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, myLight.position);
+            m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, lights[selectedLightIndex].position);
+            
 
             /*std::vector<ArmSegment> armSegments{
                 ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
@@ -254,24 +370,52 @@ public:
             }
 
 
-                
-           
+                        
+
+            m_pbrShader.bind();
+            glUniform3fv(m_pbrShader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
+
+            int numLights = lights.size();
+            glUniform1i(m_pbrShader.getUniformLocation("numLights"), numLights);
+            for (size_t i = 0; i < lights.size(); i++) {
+                std::string lightPosName = "lights[" + std::to_string(i) + "].position";
+                std::string lightColorName = "lights[" + std::to_string(i) + "].color";
+                std::string lightDirName = "lights[" + std::to_string(i) + "].direction";
+                glUniform3fv(m_pbrShader.getUniformLocation(lightPosName.c_str()), 1, glm::value_ptr(lights[i].position));
+                glUniform3fv(m_pbrShader.getUniformLocation(lightColorName.c_str()), 1, glm::value_ptr(lights[i].color));
+                //glUniform3fv(m_pbrShader.getUniformLocation(lightDirName.c_str()), 1, glm::value_ptr(lights[i].direction));
+            }
+
             for (GPUMesh& mesh : m_meshes) {
-                m_defaultShader.bind();
-                glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+                glUniformMatrix4fv(m_pbrShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
                 //Uncomment this line when you use the modelMatrix (or fragmentPosition)
                 //glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
-                glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+                glUniformMatrix3fv(m_pbrShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
                 if (mesh.hasTextureCoords()) {
                     m_texture.bind(config::textureSlots.at("mesh"));
-                    glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
-                    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
-                    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
+                    glUniform1i(m_pbrShader.getUniformLocation("colorMap"), 0);
+                    glUniform1i(m_pbrShader.getUniformLocation("hasTexCoords"), GL_TRUE);
+                    glUniform1i(m_pbrShader.getUniformLocation("useMaterial"), GL_FALSE);
                 } else {
-                    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
-                    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
+                    glUniform1i(m_pbrShader.getUniformLocation("hasTexCoords"), GL_FALSE);
+                    glUniform1i(m_pbrShader.getUniformLocation("useMaterial"), m_useMaterial);
+                    
+                    glUniform1i(m_pbrShader.getUniformLocation("normalMapping"), normalMapping);
+                    glUniform1i(m_pbrShader.getUniformLocation("albedoTex"), albedoTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("roughnessTex"), roughnessTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("metallicTex"), metallicTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("aoTex"), aoTex);
                 }
-                mesh.draw(m_defaultShader);
+                mesh.draw(m_pbrShader);
+            }
+
+            for (const Light& light : lights) {
+                if(light.color != glm::vec3(0.0))
+                    light.renderLightSource(m_lightShader, mvpMatrix);
+            }
+            GLenum error = glGetError();
+            if (error != GL_NO_ERROR) {
+                std::cout << "OpenGL error: " << error << std::endl;
             }
 
             GLenum error = glGetError();
@@ -335,6 +479,9 @@ private:
     Shader m_cubeShader;
     Shader m_wallShader;
     Shader m_robotShader;
+    Shader m_lightShader;
+    Shader m_pbrShader;
+
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
