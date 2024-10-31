@@ -2,13 +2,14 @@
 
 ## Implemented Features
 
+### Minimal Features
+
 - **Multiple Viewpoints** (10/21/2024)
 
 - **Cube Mapping (Scene Loading)** (10/22/2024)
-
   - Implemented WASD movement in Camera class
   - ~~TODO: Bugs after closing the window~~ (Fixed)
-  
+
 - **Normal mapping**
 
 - **Environment mapping**
@@ -26,17 +27,22 @@
   - Animated robot arm with several components.
   - Animation is done via code (not imported from external software).
 
+- **Bezier Curves (minimal part)**
+
+### Extra Features (Optional)
+
+- **Bezier Curves (extra part, moving at constant speed along a Bezier curve)**
+
+---
+
 ## Upcoming Features
 
 ### Minimal Features
 
-- [ ] **Smooth paths**:
-  - Implement smooth paths using Bézier curves (at least 3 Cubic Bézier curves).
-  - Toggle rendering of the Bézier curve on/off.
+- All minimal features have been completed.
 
 ### Extra Features (Optional)
 
-- [ ] Move at constant speed along a Bézier curve.
 - [ ] Shadows for multiple light sources.
 - [ ] Shadows from environment maps.
 - [ ] Particle effects (e.g., explosions, magic spells, fire).

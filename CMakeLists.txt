@@ -17,7 +17,10 @@ add_executable(Master_TechDemo
 	"src/cube.cpp"
 	"src/wall.cpp"
 	"src/robot_arm.cpp"
-	"src/camera.cpp" "src/light.h" "src/light.cpp")
+	"src/camera.cpp" 
+	"src/light.h" 
+	"src/light.cpp" 
+	"src/bezier_curve.cpp")
 
 
 target_compile_definitions(Master_TechDemo PRIVATE RESOURCE_ROOT="${CMAKE_CURRENT_LIST_DIR}/")
