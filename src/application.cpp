@@ -48,11 +48,6 @@ public:
             Camera { &m_window, glm::vec3(1.2f, 1.1f, 0.9f), -glm::vec3(1.2f, 1.1f, 0.9f) }, // Main camera
             Camera { &m_window, glm::vec3(-1, 10, -1), -glm::vec3(-1, 10, -1) }          // New camera
         }      
-        {
-            this->__init_callback();
-            this->__init_meshes();
-            this->__init_shader();
-        }
 
     {
         lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f)));
@@ -418,10 +413,7 @@ public:
                 std::cout << "OpenGL error: " << error << std::endl;
             }
 
-            GLenum error = glGetError();
-            if (error != GL_NO_ERROR) {
-                std::cout << "OpenGL error: " << error << std::endl;
-            }
+       
 
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
