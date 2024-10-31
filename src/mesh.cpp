@@ -32,11 +32,12 @@ GPUMesh::GPUMesh(const Mesh& cpuMesh)
     /*glGenBuffers(1, &m_uboMaterial);
     glBindBuffer(GL_UNIFORM_BUFFER, m_uboMaterial);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(GPUMaterial), &gpuMaterial, GL_STATIC_READ);*/
-    normalMap = new Texture("resources/textures/gold-nugget1_normal-dx.png");
+
+    /*normalMap = new Texture("resources/textures/gold-nugget1_normal-dx.png");
     albedoMap = new Texture("resources/textures/gold-nugget1_albedo.png");
     roughnessMap = new Texture("resources/textures/gold-nugget1_roughness.png");
     metallicMap = new Texture("resources/textures/gold-nugget1_metallic.png");
-    aoMap = new Texture("resources/textures/gold-nugget1_ao.png");
+    aoMap = new Texture("resources/textures/gold-nugget1_ao.png");*/
 
     // Figure out if this mesh has texture coordinates
     m_hasTextureCoords = static_cast<bool>(cpuMesh.material.kdTexture);

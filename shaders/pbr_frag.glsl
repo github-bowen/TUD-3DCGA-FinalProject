@@ -42,6 +42,7 @@ uniform int numLights;
 
 uniform vec3 cameraPos;
 
+uniform int shadingMode;
 uniform bool useMaterial;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
@@ -104,7 +105,10 @@ void main()
 
     vec3 specula = vec3(1.0);
     vec3 Lo = vec3(0.0);
+    vec3 bPhongSpecular = vec3(0.0);
+    vec3 simpleLam = vec3(0.0);
     for(int i=0; i<numLights; ++i){
+        //PBR computation
         vec3 L = normalize(lights[i].position - fragPosition);
         vec3 H = normalize(V + L);
 
@@ -129,6 +133,12 @@ void main()
         
         float NdotL = max(dot(N, L), 0.0);                
         Lo += (kD * localAlbedo / PI + specular) * radiance * NdotL; 
+
+        //Simple computation
+        float bPhongSpec = pow(max(dot(N, H), 0.0), shininess);
+        float lamDiff = max(dot(L, N), 0.0);
+        bPhongSpecular += ks * bPhongSpec * lights[i].color;
+        simpleLam += kd * lamDiff * lights[i].color;
     }
 
     vec3 ambient = vec3(0.03) * localAlbedo * localAo;
@@ -136,7 +146,11 @@ void main()
 
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));  
+    vec3 simpleColor = bPhongSpecular + simpleLam;
 
-    if (useMaterial) {FragColor = vec4(color, 1.0);}
+    if (useMaterial) {
+        if(shadingMode == 0)    FragColor = vec4(simpleColor, 1.0);
+        else if(shadingMode == 1)   FragColor = vec4(color, 1.0);
+    }
     else { FragColor = vec4(N, 1); }
 }

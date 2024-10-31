@@ -59,19 +59,21 @@ void Camera::updateInput()
     if (m_userInteraction) {
         glm::vec3 localMoveDelta { 0 };
         const glm::vec3 right = glm::normalize(glm::cross(m_forward, m_up));
-        if (m_pWindow->isKeyPressed(GLFW_KEY_A))
-            m_position -= moveSpeed * right;
-        if (m_pWindow->isKeyPressed(GLFW_KEY_D))
-            m_position += moveSpeed * right;
-        if (m_pWindow->isKeyPressed(GLFW_KEY_W))
-            m_position += moveSpeed * m_forward;
-        if (m_pWindow->isKeyPressed(GLFW_KEY_S))
-            m_position -= moveSpeed * m_forward;
-        if (m_pWindow->isKeyPressed(GLFW_KEY_R))
-            m_position += moveSpeed * m_up;
-        if (m_pWindow->isKeyPressed(GLFW_KEY_F))
-            m_position -= moveSpeed * m_up;
-
+        bool keyOccupied = ImGui::GetIO().WantCaptureKeyboard;
+        if (!keyOccupied) {
+            if (m_pWindow->isKeyPressed(GLFW_KEY_A))
+                m_position -= moveSpeed * right;
+            if (m_pWindow->isKeyPressed(GLFW_KEY_D))
+                m_position += moveSpeed * right;
+            if (m_pWindow->isKeyPressed(GLFW_KEY_W))
+                m_position += moveSpeed * m_forward;
+            if (m_pWindow->isKeyPressed(GLFW_KEY_S))
+                m_position -= moveSpeed * m_forward;
+            if (m_pWindow->isKeyPressed(GLFW_KEY_R))
+                m_position += moveSpeed * m_up;
+            if (m_pWindow->isKeyPressed(GLFW_KEY_F))
+                m_position -= moveSpeed * m_up;
+        }
         const glm::dvec2 cursorPos = m_pWindow->getCursorPos();
         const glm::vec2 delta = lookSpeed * glm::vec2(cursorPos - m_prevCursorPos);
         m_prevCursorPos = cursorPos;
