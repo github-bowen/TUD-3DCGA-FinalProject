@@ -30,9 +30,16 @@ DISABLE_WARNINGS_POP()
 #include "robot_arm.h"
 #include "bezier_curve.h"
 
+constexpr int bufferSize = 512;
 
 std::vector<Light> lights{};
 size_t selectedLightIndex = 0;
+
+enum class ShadingMode {
+    simple,
+    PBR
+};
+ShadingMode shadingMode = ShadingMode::simple;
 
 bool albedoTex = false;
 bool roughnessTex = false;
@@ -42,6 +49,24 @@ bool normalMapping = false;
 
 class Application {
 public:
+    Texture* albedoMap = nullptr;
+    Texture* roughnessMap = nullptr;
+    Texture* metallicMap = nullptr;
+    Texture* aoMap = nullptr;
+    Texture* normalMap = nullptr;
+
+    std::string albedoPath = "resources/textures/gold-nugget1_albedo.png";
+    std::string roughnessPath = "resources/textures/gold-nugget1_roughness.png";
+    std::string metallicPath = "resources/textures/gold-nugget1_metallic.png";
+    std::string aoPath = "resources/textures/gold-nugget1_ao.png";
+    std::string normalPath = "resources/textures/gold-nugget1_normal-dx.png";
+
+    char albedoBuffer[bufferSize];
+    char roughnessBuffer[bufferSize];
+    char metallicBuffer[bufferSize];
+    char aoBuffer[bufferSize];
+    char normalBuffer[bufferSize];
+
     Application()
         : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
         , m_texture(RESOURCE_ROOT TEXTURE_PATH), m_bezierCurve(true, 0.0), 
@@ -58,11 +83,36 @@ public:
             lights.push_back(Light(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
         }
 
+
+        strncpy(albedoBuffer, albedoPath.c_str(), bufferSize - 1);
+        albedoBuffer[bufferSize - 1] = '\0';
+        strncpy(roughnessBuffer, roughnessPath.c_str(), bufferSize - 1);
+        roughnessBuffer[bufferSize - 1] = '\0';
+        strncpy(metallicBuffer, metallicPath.c_str(), bufferSize - 1);
+        metallicBuffer[bufferSize - 1] = '\0';
+        strncpy(aoBuffer, aoPath.c_str(), bufferSize - 1);
+        aoBuffer[bufferSize - 1] = '\0';
+        strncpy(normalBuffer, normalPath.c_str(), bufferSize - 1);
+        normalBuffer[bufferSize - 1] = '\0';
+
+        albedoMap = new Texture(albedoPath);
+        roughnessMap = new Texture(roughnessPath);
+        metallicMap = new Texture(metallicPath);
+        aoMap = new Texture(aoPath);
+        normalMap = new Texture(normalPath);
+
         this->__init_callback();
         this->__init_meshes();
         this->__init_shader();
     }
 
+    /*~Application() {
+        delete normalMap;
+        delete albedoMap;
+        delete roughnessMap;
+        delete metallicMap;
+        delete aoMap;
+    }*/
 
     void imgui() {
 
@@ -109,11 +159,11 @@ public:
         }
         int tempSelectedOnItem = -1;
         int tempSelectedOffItem = -1;
-        ImGui::Text("On Lights:");
+        ImGui::Text("On Lights");
         if (ImGui::ListBox("##onLightsList", &tempSelectedOnItem, onItemCStrings.data(), (int)onItemCStrings.size(), 3) && tempSelectedOnItem != -1) {
             selectedLightIndex = onItemIndices[tempSelectedOnItem];
         }
-        ImGui::Text("Off Lights:");
+        ImGui::Text("Off Lights");
         if (ImGui::ListBox("##offLightsList", &tempSelectedOffItem, offItemCStrings.data(), (int)offItemCStrings.size(), 3) && tempSelectedOffItem != -1) {
             selectedLightIndex = offItemIndices[tempSelectedOffItem];
         }
@@ -125,27 +175,96 @@ public:
         ImGui::ColorEdit3("LightColor", &lights[selectedLightIndex].color[0]);
 
         ImGui::Separator();
-        ImGui::Text("Material Properties");
+        ImGui::Text("Shading");
+        const char* shadingModes[] = { "Simple", "PBR" };
+        int currentShading = static_cast<int>(shadingMode);
+        if (ImGui::Combo("Shading Mode", &currentShading, shadingModes, IM_ARRAYSIZE(shadingModes))) {
+            shadingMode = static_cast<ShadingMode>(currentShading);
+        }
+        if (shadingMode == ShadingMode::simple) {
+            GPUMaterial& material = m_meshes[0].material;
+            ImGui::Checkbox("Normal Mapping", &normalMapping);
+            ImGui::InputText("Normal Map", normalBuffer, bufferSize);
+            if (ImGui::Button("Load Normal")) {
+                delete normalMap;
+                normalPath = normalBuffer;
+                normalMap = new Texture(normalPath);
+                for (auto& mesh : m_meshes) { mesh.normalMap = normalMap; }
+            }
+            ImGui::Separator();
+            ImGui::Text("Material Properties");
+            ImGui::ColorEdit3("Diffuse Color (Kd)", glm::value_ptr(material.kd));
+            ImGui::ColorEdit3("Specular Color (Ks)", glm::value_ptr(material.ks));
+            ImGui::SliderFloat("Shininess", &material.shininess, 0.0f, 50.0f);
+            material.updateUBO();
+        }
+        else if (shadingMode == ShadingMode::PBR) {
+            GPUMaterial& material = m_meshes[0].material;
+            ImGui::Checkbox("Normal Mapping", &normalMapping);
+            ImGui::InputText("Normal Map", normalBuffer, bufferSize);
+            if (ImGui::Button("Load Normal")) {
+                delete normalMap;
+                normalPath = normalBuffer;
+                normalMap = new Texture(normalPath);
+                for (auto& mesh : m_meshes) { mesh.normalMap = normalMap; }
+            }
+            ImGui::Separator();
+            ImGui::Text("Material Properties");
+            ImGui::Checkbox("Albedo Texture", &albedoTex);
+            ImGui::InputText("Albedo Map", albedoBuffer, bufferSize);
+            if (ImGui::Button("Load Albedo")) {
+                delete albedoMap;
+                albedoPath = albedoBuffer;
+                albedoMap = new Texture(albedoPath);
+                for (auto& mesh : m_meshes) { mesh.albedoMap = albedoMap; }
+            }
+            ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
 
-        // 假设第一个 `GPUMesh` 的材质作为示例
-        GPUMaterial& material = m_meshes[0].material;
+            ImGui::Checkbox("Roughness Texture", &roughnessTex);
+            ImGui::InputText("Roughness Map", roughnessBuffer, bufferSize);
+            if (ImGui::Button("Load Roughness")) {
+                delete roughnessMap;
+                roughnessPath = roughnessBuffer;
+                roughnessMap = new Texture(roughnessPath);
+                for (auto& mesh : m_meshes) { mesh.roughnessMap = roughnessMap; }
+            }
+            ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
 
-        // 使用 ImGui 控件来修改材质属性
-        ImGui::Checkbox("Normal Mapping", &normalMapping);
-        ImGui::Checkbox("Albedo Texture", &albedoTex);
-        ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
-        ImGui::Checkbox("Roughness Texture", &roughnessTex);
-        ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
-        ImGui::Checkbox("Metallic Texture", &metallicTex);
-        ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
-        ImGui::Checkbox("Ao Texture", &aoTex);
-        ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
-        material.updateUBO();
+            ImGui::Checkbox("Metallic Texture", &metallicTex);
+            ImGui::InputText("Metallic Map", metallicBuffer, bufferSize);
+            if (ImGui::Button("Load Metallic")) {
+                delete metallicMap;
+                metallicPath = metallicBuffer;
+                metallicMap = new Texture(metallicPath);
+                for (auto& mesh : m_meshes) { mesh.metallicMap = metallicMap; }
+            }
+            ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
 
-
-		ImGui::End();
+            ImGui::Checkbox("Ao Texture", &aoTex);
+            ImGui::InputText("Ao Map", aoBuffer, bufferSize);
+            if (ImGui::Button("Load Ao")) {
+                delete aoMap;
+                aoPath = aoBuffer;
+                aoMap = new Texture(aoPath);
+                for (auto& mesh : m_meshes) { mesh.aoMap = aoMap; }
+            }
+            ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
+            material.updateUBO();
+        }
+        
+        
+        
+        ImGui::End();
         ImGui::Begin("UI Panel 2");
-      
+        
+        
+
+        ImGui::Separator();
+        ImGui::Text("Arm Segment Controls");
+          ImGui::Checkbox("See Robot Arm", &see_robot_arm);
+          ImGui::Checkbox("Animate", &animate);
+          for (size_t i = 0; i < armSegments.size(); ++i) {
+              ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
 
 		ImGui::Separator();
 		ImGui::Text("Arm Segment Controls");
@@ -324,19 +443,19 @@ public:
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, lights[selectedLightIndex].position);
             
-
-            /*std::vector<ArmSegment> armSegments{
-                ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
-                ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
-                ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
-            };*/
-            /*std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
-            for (const auto& transform : transformMatrices)
-                dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);*/
+            /*if (see_robot_arm) {
+                std::vector<ArmSegment> armSegments{
+                    ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
+                    ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
+                    ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
+                };
+                std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
+                for (const auto& transform : transformMatrices)
+                    dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);
+            }*/
             
             if (see_robot_arm) {
                 static bool wasAnimating = false;
-
                 if (animate) {
 
                     static float lastFrameTime = glfwGetTime();
@@ -415,7 +534,16 @@ public:
                 //glUniform3fv(m_pbrShader.getUniformLocation(lightDirName.c_str()), 1, glm::value_ptr(lights[i].direction));
             }
 
+            int shading;
+            if (shadingMode == ShadingMode::simple)  shading = 0;
+            else if (shadingMode == ShadingMode::PBR)    shading = 1;
+            glUniform1i(m_pbrShader.getUniformLocation("shadingMode"), shading);
             for (GPUMesh& mesh : m_meshes) {
+                mesh.albedoMap = albedoMap;
+                mesh.roughnessMap = roughnessMap;
+                mesh.metallicMap = metallicMap;
+                mesh.aoMap = aoMap;
+                mesh.normalMap = normalMap;
                 glUniformMatrix4fv(m_pbrShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
                 //Uncomment this line when you use the modelMatrix (or fragmentPosition)
                 //glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));

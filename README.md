@@ -5,16 +5,28 @@
 ### Minimal Features
 
 - **Multiple Viewpoints** (10/21/2024)
+
 - **Cube Mapping (Scene Loading)** (10/22/2024)
   - Implemented WASD movement in Camera class
   - ~~TODO: Bugs after closing the window~~ (Fixed)
+
 - **Normal mapping**
+
 - **Environment mapping**
-- **Advanced shading**:
-  - Include complex material models (PBR shaders);
-  - Textured PBR (Integrated with Normal mapping);
-  - TODO: Add more lights, Texture editable from UI.
-- **Robot Arm Animation**
+
+- **Shading**:
+  - Simple shading: Lambert + Blinn-Phong;
+  - Advanced shading: Textured PBR;
+  - All with normal mapping.
+  
+- **Material textures**:
+  - kd, ks, and shininess for simple shading;
+  - Albedo, roughness, metallic, and ambient occlusion for PBR.
+ 
+- **Hierarchical transformations**:
+  - Animated robot arm with several components.
+  - Animation is done via code (not imported from external software).
+
 - **Bezier Curves (minimal part)**
 
 ### Extra Features (Optional)
@@ -27,10 +39,7 @@
 
 ### Minimal Features
 
-- [ ] **Material textures**:
-  - Use kd (diffuse color).
-  - Use ks (specular color).
-  - Implement shininess and roughness parameters.
+- All minimal features have been completed.
 
 ### Extra Features (Optional)
 
