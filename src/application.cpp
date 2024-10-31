@@ -27,6 +27,8 @@ DISABLE_WARNINGS_POP()
 #include "cube.h"
 #include "wall.h"
 #include "light.h"
+#include "robot_arm.h"
+
 
 std::vector<Light> lights{};
 size_t selectedLightIndex = 0;
@@ -41,11 +43,12 @@ class Application {
 public:
     Application()
         : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
-        , m_texture(RESOURCE_ROOT TEXTURE_PATH), 
-        m_cameras {
+        , m_texture(RESOURCE_ROOT TEXTURE_PATH),
+        m_cameras{
             Camera { &m_window, glm::vec3(1.2f, 1.1f, 0.9f), -glm::vec3(1.2f, 1.1f, 0.9f) }, // Main camera
             Camera { &m_window, glm::vec3(-1, 10, -1), -glm::vec3(-1, 10, -1) }          // New camera
-        }
+        }      
+
     {
         lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f)));
         lights.push_back(Light(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
@@ -58,6 +61,7 @@ public:
         this->__init_meshes();
         this->__init_shader();
     }
+
 
     void imgui() {
 
@@ -113,16 +117,19 @@ public:
             selectedLightIndex = offItemIndices[tempSelectedOffItem];
         }
 
+
+        //std::cout << "current camera index: " << config::activeCameraIndex << std::endl;
+
         ImGui::DragFloat3("LightPos", glm::value_ptr(lights[selectedLightIndex].position), 0.01f, -10.0, 10.0, "%.2f");
         ImGui::ColorEdit3("LightColor", &lights[selectedLightIndex].color[0]);
 
         ImGui::Separator();
         ImGui::Text("Material Properties");
 
-        // ¼ÙÉèµÚÒ»¸ö `GPUMesh` µÄ²ÄÖÊ×÷ÎªÊ¾Àý
+        // å‡è®¾ç¬¬ä¸€ä¸ª `GPUMesh` çš„æè´¨ä½œä¸ºç¤ºä¾‹
         GPUMaterial& material = m_meshes[0].material;
 
-        // Ê¹ÓÃ ImGui ¿Ø¼þÀ´ÐÞ¸Ä²ÄÖÊÊôÐÔ
+        // ä½¿ç”¨ ImGui æŽ§ä»¶æ¥ä¿®æ”¹æè´¨å±žæ€§
         ImGui::Checkbox("Normal Mapping", &normalMapping);
         ImGui::Checkbox("Albedo Texture", &albedoTex);
         ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
@@ -133,6 +140,29 @@ public:
         ImGui::Checkbox("Ao Texture", &aoTex);
         ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
         material.updateUBO();
+      
+        ImGui::Separator();
+        ImGui::Text("Arm Segment Controls");
+          ImGui::Checkbox("See Robot Arm", &see_robot_arm);
+          ImGui::Checkbox("Animate", &animate);
+          for (size_t i = 0; i < armSegments.size(); ++i) {
+              ImGui::PushID(static_cast<int>(i)); // Use a unique ID for each segment
+
+              ImGui::Text("Segment %zu", i + 1);
+
+              // RotateX Slider - Convert angle to degrees for user-friendly adjustment
+              float rotateXDegrees = glm::degrees(armSegments[i].rotationX);
+              if (ImGui::SliderFloat("Rotation (degrees)", &rotateXDegrees, -360.0f, 360.0f)) {
+                  armSegments[i].rotationX = glm::radians(rotateXDegrees);
+              }
+
+              // Size Sliders - Allow individual adjustment of each component
+              ImGui::SliderFloat3("Size", &armSegments[i].boxSize[0], 0.1f, 5.0f);
+
+              ImGui::Separator(); // Add a separator between each segment control
+              ImGui::PopID();
+          }
+
 
         ImGui::End();
     }
@@ -213,10 +243,17 @@ public:
             wallBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/normalmap_vert.glsl");
             wallBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/normalmap_frag.glsl");
             m_wallShader = wallBuilder.build();
+
+            ShaderBuilder robotBuilder;
+            robotBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/robot_arm_vert.glsl");
+            robotBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/robot_arm_frag.glsl");
+            m_robotShader = robotBuilder.build();
+
             ShaderBuilder pbrBuilder;
             pbrBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shader_vert.glsl");
             pbrBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/pbr_frag.glsl");
             m_pbrShader = pbrBuilder.build();
+
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
@@ -226,6 +263,8 @@ public:
     void update()
     {
         int dummyInteger = 0; // Initialized to 0
+
+
         while (!m_window.shouldClose()) {
             // This is your game loop
             // Put your real-time logic and rendering in here
@@ -263,6 +302,70 @@ public:
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, lights[selectedLightIndex].position);
+            
+
+            /*std::vector<ArmSegment> armSegments{
+                ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
+                ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
+                ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
+            };*/
+            /*std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
+            for (const auto& transform : transformMatrices)
+                dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);*/
+            
+            if (see_robot_arm) {
+                static bool wasAnimating = false;
+
+                if (animate) {
+
+                    static float lastFrameTime = glfwGetTime();
+                    static float elapsedTime = 0.0f;
+
+                    // Detect when 'animate' is switched to true and reset elapsedTime
+                    if (!wasAnimating) {
+                        elapsedTime = 0.0f;  // Reset the elapsed time when animation starts
+                        wasAnimating = true; // Mark that we are now animating
+                    }
+
+                    float currentFrameTime = glfwGetTime();
+                    float deltaTime = currentFrameTime - lastFrameTime;
+                    lastFrameTime = currentFrameTime;
+
+                    // Animation sequence
+                    if (elapsedTime < 5.0f) {
+                        elapsedTime += deltaTime;
+                        armSegments[0].animate(deltaTime * 20);
+                    }
+                    else if (elapsedTime >= 5.0f && elapsedTime < 10.0f) {
+                        elapsedTime += deltaTime;
+                        armSegments[1].animate(deltaTime * 20);
+                    }
+                    else if (elapsedTime >= 10.0f && elapsedTime < 15.0f) {
+                        elapsedTime += deltaTime;
+                        armSegments[2].animate(deltaTime * 20);
+                    }
+                    else {
+                        elapsedTime = 0.0f; // Reset the sequence after all segments have animated
+                    }
+
+                    std::vector<glm::mat4> transforms = dummy.computeTransformMatrix(armSegments);
+                    for (size_t i = 0; i < transforms.size(); ++i) {
+                        dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transforms[i]);
+                    }
+                }
+                else {
+                    // Reset wasAnimating flag when 'animate' is false
+                    wasAnimating = false;
+
+                    std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
+                    for (const auto& transform : transformMatrices) {
+                        dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);
+                    }
+                }
+            }
+
+
+                        
 
             m_pbrShader.bind();
             glUniform3fv(m_pbrShader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
@@ -277,6 +380,7 @@ public:
                 glUniform3fv(m_pbrShader.getUniformLocation(lightColorName.c_str()), 1, glm::value_ptr(lights[i].color));
                 //glUniform3fv(m_pbrShader.getUniformLocation(lightDirName.c_str()), 1, glm::value_ptr(lights[i].direction));
             }
+
             for (GPUMesh& mesh : m_meshes) {
                 glUniformMatrix4fv(m_pbrShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
                 //Uncomment this line when you use the modelMatrix (or fragmentPosition)
@@ -308,6 +412,8 @@ public:
             if (error != GL_NO_ERROR) {
                 std::cout << "OpenGL error: " << error << std::endl;
             }
+
+       
 
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
@@ -357,14 +463,17 @@ private:
     Window m_window;
     Camera m_cameras[2];
 
+
     // Shader for default rendering and for depth rendering
     Shader m_defaultShader;
     Shader m_shadowShader;
     Shader m_sceneShader;
     Shader m_cubeShader;
     Shader m_wallShader;
+    Shader m_robotShader;
     Shader m_lightShader;
     Shader m_pbrShader;
+
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
@@ -378,6 +487,14 @@ private:
     Scene m_scene{ config::scene_paths };
     Cube m_cube{ config::scene_paths };
     Wall m_wall{};
+    ArmSegment dummy;
+    std::vector<ArmSegment> armSegments{
+        ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
+        ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
+        ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
+    };
+    bool animate{ false };
+    bool see_robot_arm{ false };
 };
 
 int main()
