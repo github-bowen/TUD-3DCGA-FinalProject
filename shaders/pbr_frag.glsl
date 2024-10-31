@@ -35,7 +35,7 @@ uniform bool aoTex;
 struct Light{
     vec3 position;
     vec3 color;
-    vec3 direction;
+    //vec3 direction;
 };
 uniform Light lights[MAX_LIGHTS];
 uniform int numLights;

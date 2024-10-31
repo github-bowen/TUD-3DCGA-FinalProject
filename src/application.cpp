@@ -47,9 +47,13 @@ public:
             Camera { &m_window, glm::vec3(-1, 10, -1), -glm::vec3(-1, 10, -1) }          // New camera
         }
     {
-        lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
-        lights.push_back(Light(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
-        lights.push_back(Light(glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+        lights.push_back(Light(glm::vec3(0.5f, 1.0f, 0.3f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        lights.push_back(Light(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        lights.push_back(Light(glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
+        for (int i = 0; i < 7; ++i) {
+            lights.push_back(Light(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+        }
+
         this->__init_callback();
         this->__init_meshes();
         this->__init_shader();
@@ -74,20 +78,43 @@ public:
         ImGui::Separator();
         ImGui::Text("Lights");
 
-        std::vector<std::string> itemStrings = {};
+        std::vector<std::string> onItemStrings;
+        std::vector<size_t> onItemIndices;
+        std::vector<std::string> offItemStrings;
+        std::vector<size_t> offItemIndices;
+
         for (size_t i = 0; i < lights.size(); i++) {
             auto string = "Light " + std::to_string(i);
-            itemStrings.push_back(string);
+            if (glm::length(lights[i].color) > 0.001f) {
+                onItemStrings.push_back(string);
+                onItemIndices.push_back(i);
+            }
+            else {
+                offItemStrings.push_back(string);
+                offItemIndices.push_back(i);
+            }
         }
-        std::vector<const char*> itemCStrings = {};
-        for (const auto& string : itemStrings) {
-            itemCStrings.push_back(string.c_str());
+        std::vector<const char*> onItemCStrings;
+        for (const auto& string : onItemStrings) {
+            onItemCStrings.push_back(string.c_str());
         }
-        int tempSelectedItem = static_cast<int>(selectedLightIndex);
-        if (ImGui::ListBox("Lights", &tempSelectedItem, itemCStrings.data(), (int)itemCStrings.size(), 4)) {
-            selectedLightIndex = static_cast<size_t>(tempSelectedItem);
+        std::vector<const char*> offItemCStrings;
+        for (const auto& string : offItemStrings) {
+            offItemCStrings.push_back(string.c_str());
         }
+        int tempSelectedOnItem = -1;
+        int tempSelectedOffItem = -1;
+        ImGui::Text("On Lights:");
+        if (ImGui::ListBox("##onLightsList", &tempSelectedOnItem, onItemCStrings.data(), (int)onItemCStrings.size(), 3) && tempSelectedOnItem != -1) {
+            selectedLightIndex = onItemIndices[tempSelectedOnItem];
+        }
+        ImGui::Text("Off Lights:");
+        if (ImGui::ListBox("##offLightsList", &tempSelectedOffItem, offItemCStrings.data(), (int)offItemCStrings.size(), 3) && tempSelectedOffItem != -1) {
+            selectedLightIndex = offItemIndices[tempSelectedOffItem];
+        }
+
         ImGui::DragFloat3("LightPos", glm::value_ptr(lights[selectedLightIndex].position), 0.01f, -10.0, 10.0, "%.2f");
+        ImGui::ColorEdit3("LightColor", &lights[selectedLightIndex].color[0]);
 
         ImGui::Separator();
         ImGui::Text("Material Properties");
@@ -127,20 +154,13 @@ public:
             case GLFW_KEY_L: {
                 Camera& currentView = m_cameras[config::activeCameraIndex];
                 glm::vec3 newLightPos = currentView.cameraPos();
-                if (shiftPressed)
-                    lights.push_back(Light{ newLightPos, glm::vec3(1), glm::vec3(0) });
-                else
+                if (shiftPressed) {
                     lights[selectedLightIndex].position = newLightPos;
-                return;
-            }
-            case GLFW_KEY_K: {
-                if (!lights.empty() && selectedLightIndex >= 0 && selectedLightIndex < lights.size()) {
-                    lights.erase(lights.begin() + selectedLightIndex);
-
-                    if (selectedLightIndex >= lights.size()) {
-                        selectedLightIndex = lights.size() - 1;
-                    }
+                    if(lights[selectedLightIndex].color == glm::vec3(0.0))
+                        lights[selectedLightIndex].color = glm::vec3(1.0);
                 }
+                else
+                    lights[selectedLightIndex].color = glm::vec3(0.0);
                 return;
             }
             default:
@@ -255,7 +275,7 @@ public:
                 std::string lightDirName = "lights[" + std::to_string(i) + "].direction";
                 glUniform3fv(m_pbrShader.getUniformLocation(lightPosName.c_str()), 1, glm::value_ptr(lights[i].position));
                 glUniform3fv(m_pbrShader.getUniformLocation(lightColorName.c_str()), 1, glm::value_ptr(lights[i].color));
-                glUniform3fv(m_pbrShader.getUniformLocation(lightDirName.c_str()), 1, glm::value_ptr(lights[i].direction));
+                //glUniform3fv(m_pbrShader.getUniformLocation(lightDirName.c_str()), 1, glm::value_ptr(lights[i].direction));
             }
             for (GPUMesh& mesh : m_meshes) {
                 glUniformMatrix4fv(m_pbrShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
@@ -281,8 +301,14 @@ public:
             }
 
             for (const Light& light : lights) {
-                light.renderLightSource(m_lightShader, mvpMatrix);
+                if(light.color != glm::vec3(0.0))
+                    light.renderLightSource(m_lightShader, mvpMatrix);
             }
+            GLenum error = glGetError();
+            if (error != GL_NO_ERROR) {
+                std::cout << "OpenGL error: " << error << std::endl;
+            }
+
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
         }
