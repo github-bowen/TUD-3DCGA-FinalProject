@@ -21,17 +21,17 @@ void Light::renderLightSource(const Shader& shader, const glm::mat4& mvp) const 
     shader.bind();
     glUniform4fv(shader.getUniformLocation("pos"), 1, glm::value_ptr(screenPos));
     glUniform3fv(shader.getUniformLocation("color"), 1, glm::value_ptr(color));
-    GLenum error0 = glGetError();
+    /*GLenum error0 = glGetError();
     if (error0 != GL_NO_ERROR) {
         std::cout << "OpenGL error before renderLightSource: " << error0 << std::endl;
-    }
+    }*/
 
     glPointSize(20.0f);
     glBindVertexArray(light_vao);
     glDrawArrays(GL_POINTS, 0, 1);
     glBindVertexArray(0);
-    GLenum error1 = glGetError();
+    /*GLenum error1 = glGetError();
     if (error1 != GL_NO_ERROR) {
         std::cout << "OpenGL error after renderLightSource: " << error1 << std::endl;
-    }
+    }*/
 }
