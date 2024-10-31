@@ -2,6 +2,8 @@
 
 ## Implemented Features
 
+### Minimal Features
+
 - **Multiple Viewpoints** (10/21/2024)
 - **Cube Mapping (Scene Loading)** (10/22/2024)
   - Implemented WASD movement in Camera class
@@ -15,6 +17,12 @@
 - **Robot Arm Animation**
 - **Bezier Curves (minimal part)**
 
+### Extra Features (Optional)
+
+- **Bezier Curves (extra part, moving at constant speed along a Bezier curve)**
+
+---
+
 ## Upcoming Features
 
 ### Minimal Features
@@ -26,7 +34,6 @@
 
 ### Extra Features (Optional)
 
-- [ ] Move at constant speed along a Bézier curve.
 - [ ] Shadows for multiple light sources.
 - [ ] Shadows from environment maps.
 - [ ] Particle effects (e.g., explosions, magic spells, fire).

@@ -24,8 +24,11 @@ public:
     void setSegmentControlPoints(size_t segmentIndex, const glm::vec3& p0, 
         const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
 
-	// get point on path at given time (this->time belongs to [0, 1])
-    glm::vec3 getPointOnPath() const;
+	// get point on path at current time: this->time
+    glm::vec3 getCurrentPointOnPath() const;
+
+	// get point on path at given time (time belongs to [0, 1])
+	glm::vec3 getPointOnPath(float anotherTime) const;
 
 	// get total segment count
     size_t getSegmentCount() const;
@@ -36,11 +39,24 @@ public:
     // control points of each segment
     std::vector<std::vector<glm::vec3>> segments;
 
+    /* ------------------ EXTRA PART: Moving At Constant Speed ------------------ */
+
+	// get point on path at given distance when moving at constant speed
+    glm::vec3 getPointAtDistance(float distance) const;
+
+    glm::vec3 getPointAtCurrentDistance() const;
+
+	// update arc length table for each segment
+    void updateArcLengthTable();
+
     /* ------------------ PUBLIC VARIABLES: UI COMPONENTS ------------------ */
-    bool showBezierPath;
-	float time;  // time value for path point calculation. NOTE: different from t value in each segment
+    bool showBezierPath = false;
+	float time = 0.0f;  // current time value. NOTE: different from t value in each segment
 
-
+	float distance = 0.0f; // current distance value
+    float speed = 0.05f;
+    bool movingAtConstantSpeed = true;
+	int direction = 1;  // 1: forward, -1: backward
 
 private:
 
@@ -49,6 +65,18 @@ private:
         const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) const;
 
 	void setupPath();
+
+    /* ------------------ EXTRA PART: Moving At Constant Speed ------------------ */
+
+    struct ArcLengthEntry {
+        float arcLength;
+		float time;      // corresponding time value
+    };
+
+	std::vector<ArcLengthEntry> arcLengthTable; // arc length table for each segment
+
+	// approximate arc length of cubic Bezier curve between t0 and t1
+    float approximateArcLength(float t0, float t1, int segmentIndex, int samples = 10) const;
 };
 
 #endif // BEZIER_CURVE_H

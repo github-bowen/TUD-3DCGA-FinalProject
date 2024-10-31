@@ -143,8 +143,8 @@ public:
         material.updateUBO();
 
 
-		/*ImGui::End();
-        ImGui::Begin("UI Panel 2");*/
+		ImGui::End();
+        ImGui::Begin("UI Panel 2");
       
 
 		ImGui::Separator();
@@ -170,20 +170,20 @@ public:
 		}
 
         /* Bezier Curve Components*/
+		// Minimal Features of Bezier Curve
         ImGui::Separator();
-        ImGui::Text("Bezier Path Controls");
+        ImGui::Text("Bezier Path Controls (A bezier path of 3 cubic bezier curves)");
         ImGui::Checkbox("Show Bezier Path", &m_bezierCurve.showBezierPath);
-        ImGui::SliderFloat("Path Progress [0, 1]", &m_bezierCurve.time, 0.0f, 1.0f);
 
-		// Display control points for each segment
-        /*for (size_t i = 0; i < m_bezierCurve.getSegmentCount(); ++i) {
-			std::vector<glm::vec3>& segment = m_bezierCurve.segments[i];
-            ImGui::Text("Bezier Curve %zu", i + 1);
-            for (size_t j = 0; j < segment.size(); ++j) {
-                ImGui::SliderFloat3(("Control Point " + std::to_string(j + 1) + "##" + std::to_string(i)).c_str(),
-                    &segment[j].x, -10.0f, 10.0f);
-            }
-        }*/
+        ImGui::BeginDisabled(m_bezierCurve.showBezierPath == false);
+            ImGui::SliderFloat("Path Progress [0, 1]", &m_bezierCurve.time, 0.0f, 1.0f);
+
+		// Extra Features of Bezier Curve
+		    ImGui::Checkbox("Automatically Moving at Constant Speed", &m_bezierCurve.movingAtConstantSpeed);
+            ImGui::BeginDisabled(m_bezierCurve.movingAtConstantSpeed == false);
+                ImGui::SliderFloat("Speed", &m_bezierCurve.speed, 0.01f, 0.2f);
+            ImGui::EndDisabled();
+        ImGui::EndDisabled();
 
         ImGui::End();
     }
@@ -385,7 +385,20 @@ public:
                 }
             }
 
+            // Bezier curves
+			if (m_bezierCurve.showBezierPath) {
+                // FIXME: directly apply bezier curve at the first light
+                
 
+				if (m_bezierCurve.movingAtConstantSpeed) {
+					m_bezierCurve.time += m_bezierCurve.speed * 0.01f;
+					if (m_bezierCurve.time > 1.0f) {
+						m_bezierCurve.time = 0.0f;
+					}
+				}
+
+                lights[0].position = m_bezierCurve.getCurrentPointOnPath();
+			}
                         
 
             m_pbrShader.bind();
@@ -424,9 +437,6 @@ public:
                 }
                 mesh.draw(m_pbrShader);
             }
-
-            // FIXME: directly apply bezier curve at the first light
-			lights[0].position = m_bezierCurve.getPointOnPath();
 
             for (const Light& light : lights) {
                 if(light.color != glm::vec3(0.0))
