@@ -46,7 +46,7 @@ std::vector<glm::mat4> ArmSegment::computeTransformMatrix(const std::vector<ArmS
 {
 
     std::vector<glm::mat4> transforms;
-    std::list<ArmSegment> seglist;
+    std::list<const ArmSegment*> seglist;
     glm::vec3 axis{ 1, 0, 0 };
     glm::mat4 rotate = glm::identity<glm::mat4>();
 
@@ -60,11 +60,11 @@ std::vector<glm::mat4> ArmSegment::computeTransformMatrix(const std::vector<ArmS
         float translateangle = 0.0;
 
 
-        for (const ArmSegment& segment : seglist) {
-            translateangle += segment.rotationX;
-            translationall = translationMatrix({ 0,segment.boxSize.z * std::sin(-translateangle),segment.boxSize.z * std::cos(translateangle) }) * translationall;
+        for (const ArmSegment* segment : seglist) {
+            translateangle += segment->rotationX;
+            translationall = translationMatrix({ 0,segment->boxSize.z * std::sin(-translateangle),segment->boxSize.z * std::cos(translateangle) }) * translationall;
         }
-        seglist.push_back(armSegment);
+        seglist.push_back(&armSegment);
 
         matrix = translationall * rotate * scale;
 
@@ -79,50 +79,7 @@ std::vector<glm::mat4> ArmSegment::computeTransformMatrix(const std::vector<ArmS
 
 void ArmSegment::setupArmSegment() {
     // Define the vertices for a cube
-    float vertices[] = {
-        // positions          // normals
-        -0.5f, -0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
-         0.5f, -0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.0f,  0.0f,  0.0f, -1.0f,
-
-        -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
-        -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,
-
-        -0.5f,  0.5f,  1.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  1.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  1.0f, -1.0f,  0.0f,  0.0f,
-
-         0.5f,  0.5f,  1.0f,  1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f, -0.0f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.0f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.0f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  1.0f,  1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  1.0f,  1.0f,  0.0f,  0.0f,
-
-        -0.5f, -0.5f, -0.0f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f, -0.0f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  1.0f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  1.0f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  1.0f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.0f,  0.0f, -1.0f,  0.0f,
-
-        -0.5f,  0.5f, -0.0f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.0f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  1.0f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  1.0f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  1.0f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.0f,  0.0f,  1.0f,  0.0f
-    };
+    
 
 
     // Generate and bind the Vertex Array Object
