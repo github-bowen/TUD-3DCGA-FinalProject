@@ -31,6 +31,7 @@ uniform bool albedoTex;
 uniform bool roughnessTex;
 uniform bool metallicTex;
 uniform bool aoTex;
+uniform bool IBL;
 
 struct Light{
     vec3 position;
@@ -45,9 +46,16 @@ uniform vec3 cameraPos;
 uniform int shadingMode;
 uniform bool useMaterial;
 
+uniform samplerCube irradianceMap;
+
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -103,8 +111,9 @@ void main()
     if(metallicTex){localMetallic = texture(metallicMap, fragTexCoord).r;}
     if(aoTex){localAo = texture(aoMap, fragTexCoord).r;}
 
-    vec3 specula = vec3(1.0);
     vec3 Lo = vec3(0.0);
+    vec3 F0 = vec3(0.04); 
+    F0 = mix(F0, localAlbedo, localMetallic);
     vec3 bPhongSpecular = vec3(0.0);
     vec3 simpleLam = vec3(0.0);
     for(int i=0; i<numLights; ++i){
@@ -116,8 +125,8 @@ void main()
         float attenuation = 1.0 / (distance * distance);
         vec3 radiance = lights[i].color * attenuation;
 
-        vec3 F0 = vec3(0.04); 
-        F0 = mix(F0, localAlbedo, localMetallic);
+        //vec3 F0 = vec3(0.04); 
+        //F0 = mix(F0, localAlbedo, localMetallic);
 
         float NDF = DistributionGGX(N, H, localRoughness);        
         float G = GeometrySmith(N, V, L, localRoughness);      
@@ -141,7 +150,13 @@ void main()
         simpleLam += kd * lamDiff * lights[i].color;
     }
 
-    vec3 ambient = vec3(0.03) * localAlbedo * localAo;
+    vec3 IBLDkS = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness); 
+    vec3 IBLDkD = 1.0 - IBLDkS;
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * localAlbedo;
+    vec3 ambient = vec3(0.03);
+    if(!IBL)    ambient = vec3(0.03) * localAlbedo * localAo;
+    else if(IBL)    ambient = (IBLDkD * diffuse) * localAo;
     vec3 color = ambient + Lo;
 
     color = color / (color + vec3(1.0));

@@ -12,9 +12,11 @@ public:
     Texture* equiMap = nullptr;
     void renderCube();
     void equiToCube(Shader& shader);
+    void cubeToConv(Shader& shader);
     void renderScene(Shader& shader, const glm::mat4& projection, const glm::mat4& view);
     void initBuffer();
     GLuint envCubemap;
+    GLuint irradianceMap;
 
 private:
     GLuint captureFBO;

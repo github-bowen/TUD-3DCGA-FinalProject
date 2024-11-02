@@ -34,6 +34,7 @@ DISABLE_WARNINGS_POP()
 
 constexpr int bufferSize = 512;
 bool IBL = false;
+bool HDRupdated = true;
 
 std::vector<Light> lights{};
 size_t selectedLightIndex = 0;
@@ -224,6 +225,7 @@ public:
                 equiPath = equiBuffer;
                 equiMap = new Texture(equiPath, true);
                 m_HDR.equiMap = equiMap;
+                HDRupdated = true;
             }
             ImGui::Checkbox("Normal Mapping", &normalMapping);
             ImGui::InputText("Normal Map", normalBuffer, bufferSize);
@@ -417,6 +419,11 @@ public:
             HDRsceneBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/HDRscene_vert.glsl");
             HDRsceneBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/HDRscene_frag.glsl");
             m_HDRsceneShader = HDRsceneBuilder.build();
+
+            ShaderBuilder HDRconvBuilder;
+            HDRconvBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/HDRcube_vert.glsl");
+            HDRconvBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/HDRconv_frag.glsl");
+            m_HDRconvShader = HDRconvBuilder.build();
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -424,14 +431,18 @@ public:
 
     void update()
     {
-
         int dummyInteger = 0; // Initialized to 0
 
         while (!m_window.shouldClose()) {
             // This is your game loop
             // Put your real-time logic and rendering in here
-            m_HDR.equiMap = equiMap;
-            m_HDR.equiToCube(m_HDRcubeShader);
+            
+            if (HDRupdated) {
+                m_HDR.equiMap = equiMap;
+                m_HDR.equiToCube(m_HDRcubeShader);
+                m_HDR.cubeToConv(m_HDRconvShader);
+                HDRupdated = false;
+            }
             glm::ivec2 windowSize = m_window.getFrameBufferSize();
             int viewportSize = std::min(windowSize.x, windowSize.y);
             int x = (windowSize.x - viewportSize) / 2;
@@ -584,6 +595,11 @@ public:
                     glUniform1i(m_pbrShader.getUniformLocation("roughnessTex"), roughnessTex);
                     glUniform1i(m_pbrShader.getUniformLocation("metallicTex"), metallicTex);
                     glUniform1i(m_pbrShader.getUniformLocation("aoTex"), aoTex);
+
+                    glUniform1i(m_pbrShader.getUniformLocation("IBL"), IBL);
+                    glActiveTexture(GL_TEXTURE13);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDR.irradianceMap);
+                    glUniform1i(m_pbrShader.getUniformLocation("irradianceMap"), 13);
                 }
                 mesh.draw(m_pbrShader);
             }
@@ -658,6 +674,7 @@ private:
     Shader m_pbrShader;
     Shader m_HDRcubeShader;
     Shader m_HDRsceneShader;
+    Shader m_HDRconvShader;
 
 
     std::vector<GPUMesh> m_meshes;
