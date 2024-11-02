@@ -223,7 +223,7 @@ public:
                 delete equiMap;
                 equiPath = equiBuffer;
                 equiMap = new Texture(equiPath, true);
-                HDR.equiMap = equiMap;
+                m_HDR.equiMap = equiMap;
             }
             ImGui::Checkbox("Normal Mapping", &normalMapping);
             ImGui::InputText("Normal Map", normalBuffer, bufferSize);
@@ -430,8 +430,8 @@ public:
         while (!m_window.shouldClose()) {
             // This is your game loop
             // Put your real-time logic and rendering in here
-            HDR.equiMap = equiMap;
-            HDR.equiToCube(m_HDRcubeShader);
+            m_HDR.equiMap = equiMap;
+            m_HDR.equiToCube(m_HDRcubeShader);
             glm::ivec2 windowSize = m_window.getFrameBufferSize();
             int viewportSize = std::min(windowSize.x, windowSize.y);
             int x = (windowSize.x - viewportSize) / 2;
@@ -464,7 +464,7 @@ public:
             glm::mat4 sceneView = glm::mat4(glm::mat3(view));
             //m_scene.draw(m_sceneShader, config::m_projectionMatrix, sceneView, config::textureSlots.at("scene"));
             if(!IBL)    m_scene.draw(m_sceneShader, config::m_projectionMatrix, sceneView);
-            else if(IBL)    HDR.renderScene(m_HDRsceneShader, config::m_projectionMatrix, view);
+            else if(IBL)    m_HDR.renderScene(m_HDRsceneShader, config::m_projectionMatrix, view);
 
             Camera& currentCamera = m_cameras[config::activeCameraIndex];
             glm::vec3 cameraPos = currentCamera.cameraPos();
@@ -680,7 +680,7 @@ private:
     };
     bool animate{ false };
     bool see_robot_arm{ false };
-    HDR HDR{};
+    HDR m_HDR{};
     BezierCurve m_bezierCurve {true, 0.0};
 
 };
