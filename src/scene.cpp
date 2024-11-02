@@ -135,7 +135,7 @@ void Scene::setupScene() {
 }
 
 // Draw the scene cube
-void Scene::draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, GLuint textureSlot) {
+void Scene::draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view) {
     GLint old_depth_mode;
     glGetIntegerv(GL_DEPTH_FUNC, &old_depth_mode);
 
@@ -147,7 +147,7 @@ void Scene::draw(Shader& shader, const glm::mat4& projection, const glm::mat4& v
     glUniformMatrix4fv(shader.getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(view));
 
     // Bind the texture unit and set the sampler uniform
-    glActiveTexture(textureSlot);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, m_scene_cube_map_texture);
     glUniform1i(shader.getUniformLocation("sampler_cube"), 0);
 

@@ -19,7 +19,7 @@ class Scene {
 public:
     Scene(const std::vector<std::string>&);
     ~Scene();
-    void draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, GLuint);
+    void draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view);
 
 private:
 

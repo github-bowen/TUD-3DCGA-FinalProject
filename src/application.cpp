@@ -20,6 +20,7 @@ DISABLE_WARNINGS_POP()
 #include <functional>
 #include <iostream>
 #include <vector>
+#include <stb/stb_image.h>
 
 #include "config.h"
 #include "scene.h"
@@ -29,8 +30,10 @@ DISABLE_WARNINGS_POP()
 #include "light.h"
 #include "robot_arm.h"
 #include "bezier_curve.h"
+#include "HDR.h"
 
 constexpr int bufferSize = 512;
+bool IBL = false;
 
 std::vector<Light> lights{};
 size_t selectedLightIndex = 0;
@@ -54,22 +57,29 @@ public:
     Texture* metallicMap = nullptr;
     Texture* aoMap = nullptr;
     Texture* normalMap = nullptr;
+    Texture* equiMap = nullptr;
 
     std::string albedoPath = "resources/textures/gold-nugget1_albedo.png";
     std::string roughnessPath = "resources/textures/gold-nugget1_roughness.png";
     std::string metallicPath = "resources/textures/gold-nugget1_metallic.png";
     std::string aoPath = "resources/textures/gold-nugget1_ao.png";
     std::string normalPath = "resources/textures/gold-nugget1_normal-dx.png";
+    std::string equiPath = "resources/equirectangular/Footprint_Court_8k_TMap.jpg";
+    //std::string equiPath = "resources/equirectangular/modern_house_indoors.png"; 
+    //std::string equiPath = "resources/equirectangular/Milkyway_BG.jpg";
+    //std::string equiPath = "resources/equirectangular/Road_to_MonumentValley_8k.jpg";
+    //std::string equiPath = "resources/equirectangular/Frozen_Waterfall_HiRes_TMap.jpg";
 
     char albedoBuffer[bufferSize];
     char roughnessBuffer[bufferSize];
     char metallicBuffer[bufferSize];
     char aoBuffer[bufferSize];
     char normalBuffer[bufferSize];
+    char equiBuffer[bufferSize];
 
     Application()
         : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
-        , m_texture(RESOURCE_ROOT TEXTURE_PATH), m_bezierCurve(true, 0.0), 
+        , m_texture(RESOURCE_ROOT TEXTURE_PATH, false), m_bezierCurve(true, 0.0), 
           m_cameras{
             Camera { &m_window, glm::vec3(1.2f, 1.1f, 0.9f), -glm::vec3(1.2f, 1.1f, 0.9f) }, // Main camera
             Camera { &m_window, glm::vec3(-1, 10, -1), -glm::vec3(-1, 10, -1) }          // New camera
@@ -94,12 +104,15 @@ public:
         aoBuffer[bufferSize - 1] = '\0';
         strncpy(normalBuffer, normalPath.c_str(), bufferSize - 1);
         normalBuffer[bufferSize - 1] = '\0';
+        strncpy(equiBuffer, equiPath.c_str(), bufferSize - 1);
+        equiBuffer[bufferSize - 1] = '\0';
 
-        albedoMap = new Texture(albedoPath);
-        roughnessMap = new Texture(roughnessPath);
-        metallicMap = new Texture(metallicPath);
-        aoMap = new Texture(aoPath);
-        normalMap = new Texture(normalPath);
+        albedoMap = new Texture(albedoPath, false);
+        roughnessMap = new Texture(roughnessPath, false);
+        metallicMap = new Texture(metallicPath, false);
+        aoMap = new Texture(aoPath, false);
+        normalMap = new Texture(normalPath, false);
+        equiMap = new Texture(equiPath, true);
 
         this->__init_callback();
         this->__init_meshes();
@@ -183,12 +196,14 @@ public:
         }
         if (shadingMode == ShadingMode::simple) {
             GPUMaterial& material = m_meshes[0].material;
+            for (auto& mesh : m_meshes)
+                material = mesh.material;
             ImGui::Checkbox("Normal Mapping", &normalMapping);
             ImGui::InputText("Normal Map", normalBuffer, bufferSize);
             if (ImGui::Button("Load Normal")) {
                 delete normalMap;
                 normalPath = normalBuffer;
-                normalMap = new Texture(normalPath);
+                normalMap = new Texture(normalPath, false);
                 for (auto& mesh : m_meshes) { mesh.normalMap = normalMap; }
             }
             ImGui::Separator();
@@ -200,12 +215,22 @@ public:
         }
         else if (shadingMode == ShadingMode::PBR) {
             GPUMaterial& material = m_meshes[0].material;
+            for (auto& mesh : m_meshes)
+                material = mesh.material;
+            ImGui::Checkbox("Image Based Lighting", &IBL);
+            ImGui::InputText("HDR Map", equiBuffer, bufferSize);
+            if (ImGui::Button("Load HDR")) {
+                delete equiMap;
+                equiPath = equiBuffer;
+                equiMap = new Texture(equiPath, true);
+                HDR.equiMap = equiMap;
+            }
             ImGui::Checkbox("Normal Mapping", &normalMapping);
             ImGui::InputText("Normal Map", normalBuffer, bufferSize);
             if (ImGui::Button("Load Normal")) {
                 delete normalMap;
                 normalPath = normalBuffer;
-                normalMap = new Texture(normalPath);
+                normalMap = new Texture(normalPath, false);
                 for (auto& mesh : m_meshes) { mesh.normalMap = normalMap; }
             }
             ImGui::Separator();
@@ -215,7 +240,7 @@ public:
             if (ImGui::Button("Load Albedo")) {
                 delete albedoMap;
                 albedoPath = albedoBuffer;
-                albedoMap = new Texture(albedoPath);
+                albedoMap = new Texture(albedoPath, false);
                 for (auto& mesh : m_meshes) { mesh.albedoMap = albedoMap; }
             }
             ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
@@ -225,7 +250,7 @@ public:
             if (ImGui::Button("Load Roughness")) {
                 delete roughnessMap;
                 roughnessPath = roughnessBuffer;
-                roughnessMap = new Texture(roughnessPath);
+                roughnessMap = new Texture(roughnessPath, false);
                 for (auto& mesh : m_meshes) { mesh.roughnessMap = roughnessMap; }
             }
             ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
@@ -235,7 +260,7 @@ public:
             if (ImGui::Button("Load Metallic")) {
                 delete metallicMap;
                 metallicPath = metallicBuffer;
-                metallicMap = new Texture(metallicPath);
+                metallicMap = new Texture(metallicPath, false);
                 for (auto& mesh : m_meshes) { mesh.metallicMap = metallicMap; }
             }
             ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
@@ -245,19 +270,15 @@ public:
             if (ImGui::Button("Load Ao")) {
                 delete aoMap;
                 aoPath = aoBuffer;
-                aoMap = new Texture(aoPath);
+                aoMap = new Texture(aoPath, false);
                 for (auto& mesh : m_meshes) { mesh.aoMap = aoMap; }
             }
             ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
             material.updateUBO();
         }
-        
-        
-        
+
         /*ImGui::End();
         ImGui::Begin("UI Panel 2");*/
-        
-        
 
 		ImGui::Separator();
 		ImGui::Text("Arm Segment Controls");
@@ -387,7 +408,15 @@ public:
             pbrBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/pbr_frag.glsl");
             m_pbrShader = pbrBuilder.build();
 
+            ShaderBuilder HDRcubeBuilder;
+            HDRcubeBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/HDRcube_vert.glsl");
+            HDRcubeBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/HDRcube_frag.glsl");
+            m_HDRcubeShader = HDRcubeBuilder.build();
 
+            ShaderBuilder HDRsceneBuilder;
+            HDRsceneBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/HDRscene_vert.glsl");
+            HDRsceneBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/HDRscene_frag.glsl");
+            m_HDRsceneShader = HDRsceneBuilder.build();
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -395,12 +424,21 @@ public:
 
     void update()
     {
-        int dummyInteger = 0; // Initialized to 0
 
+        int dummyInteger = 0; // Initialized to 0
 
         while (!m_window.shouldClose()) {
             // This is your game loop
             // Put your real-time logic and rendering in here
+            HDR.equiMap = equiMap;
+            HDR.equiToCube(m_HDRcubeShader);
+            glm::ivec2 windowSize = m_window.getFrameBufferSize();
+            int viewportSize = std::min(windowSize.x, windowSize.y);
+            int x = (windowSize.x - viewportSize) / 2;
+            int y = (windowSize.y - viewportSize) / 2;
+
+            glViewport(x, y, viewportSize, viewportSize);
+
             m_window.updateInput();
             m_cameras[config::activeCameraIndex].updateInput();
 
@@ -413,6 +451,7 @@ public:
 
             // ...
             glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LEQUAL);
             //glEnable(GL_BLEND);
 
             const glm::mat4 view = m_cameras[config::activeCameraIndex].viewMatrix();
@@ -423,29 +462,20 @@ public:
 
             // render scene: remove translation from the view matrix
             glm::mat4 sceneView = glm::mat4(glm::mat3(view));
-            m_scene.draw(m_sceneShader, config::m_projectionMatrix, sceneView, config::textureSlots.at("scene"));
+            //m_scene.draw(m_sceneShader, config::m_projectionMatrix, sceneView, config::textureSlots.at("scene"));
+            if(!IBL)    m_scene.draw(m_sceneShader, config::m_projectionMatrix, sceneView);
+            else if(IBL)    HDR.renderScene(m_HDRsceneShader, config::m_projectionMatrix, view);
 
             Camera& currentCamera = m_cameras[config::activeCameraIndex];
             glm::vec3 cameraPos = currentCamera.cameraPos();
-            m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, 
-                config::m_projectionMatrix, cameraPos, config::textureSlots.at("cube"));
+            if (!IBL)   m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, config::m_projectionMatrix, cameraPos, GL_TEXTURE1);
+            else if(IBL)    m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, config::m_projectionMatrix, cameraPos, GL_TEXTURE11);
 
             // Assuming you want to rotate around the x-axis by 90 degrees
             glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around the x-axis
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, lights[selectedLightIndex].position);
-            
-            /*if (see_robot_arm) {
-                std::vector<ArmSegment> armSegments{
-                    ArmSegment { glm::radians(-40.0f), glm::vec3(1, 1, 3) },
-                    ArmSegment { glm::radians(30.0f), glm::vec3(1.0f, 0.6f, 2) },
-                    ArmSegment { glm::radians(40.0f), glm::vec3(0.3f, 0.3f, 1) }
-                };
-                std::vector<glm::mat4> transformMatrices = dummy.computeTransformMatrix(armSegments);
-                for (const auto& transform : transformMatrices)
-                    dummy.draw(m_robotShader, config::m_modelMatrix, config::m_projectionMatrix, view, transform);
-            }*/
             
             if (see_robot_arm) {
                 static bool wasAnimating = false;
@@ -563,12 +593,11 @@ public:
                 if(light.color != glm::vec3(0.0))
                     light.renderLightSource(m_lightShader, mvpMatrix);
             }
+
             GLenum error = glGetError();
             if (error != GL_NO_ERROR) {
                 std::cout << "OpenGL error: " << error << std::endl;
             }
-
-       
 
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
@@ -628,6 +657,8 @@ private:
     Shader m_robotShader;
     Shader m_lightShader;
     Shader m_pbrShader;
+    Shader m_HDRcubeShader;
+    Shader m_HDRsceneShader;
 
 
     std::vector<GPUMesh> m_meshes;
@@ -650,8 +681,9 @@ private:
     };
     bool animate{ false };
     bool see_robot_arm{ false };
-
+    HDR HDR;
     BezierCurve m_bezierCurve {true, 0.0};
+
 };
 
 int main()

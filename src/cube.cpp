@@ -206,10 +206,10 @@ void Cube::draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat3& n
     glUniformMatrix3fv(shader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
     glUniform3fv(shader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
 
-    glActiveTexture(textureSlot);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, m_cube_map_texture);
-    glUniform1i(shader.getUniformLocation("sampler_cube"), 0);
-
+    if(textureSlot == GL_TEXTURE1)  glUniform1i(shader.getUniformLocation("sampler_cube"), 1);
+    else if(textureSlot == GL_TEXTURE11)    glUniform1i(shader.getUniformLocation("sampler_cube"), 11);
 
     // Bind the VAO
     glBindVertexArray(m_cube_vao);
@@ -222,4 +222,3 @@ void Cube::draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat3& n
 
     glDepthFunc(old_depth_mode);
 }
-
