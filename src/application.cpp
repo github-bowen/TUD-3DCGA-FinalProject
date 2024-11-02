@@ -545,7 +545,6 @@ public:
 
             m_pbrShader.bind();
             glUniform3fv(m_pbrShader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
-
             int numLights = lights.size();
             glUniform1i(m_pbrShader.getUniformLocation("numLights"), numLights);
             for (size_t i = 0; i < lights.size(); i++) {
@@ -558,7 +557,7 @@ public:
             }
 
             int shading;
-            if (shadingMode == ShadingMode::simple)  shading = 0;
+            if (shadingMode == ShadingMode::simple) {shading = 0;  IBL = false;}
             else if (shadingMode == ShadingMode::PBR)    shading = 1;
             glUniform1i(m_pbrShader.getUniformLocation("shadingMode"), shading);
             for (GPUMesh& mesh : m_meshes) {
@@ -681,7 +680,7 @@ private:
     };
     bool animate{ false };
     bool see_robot_arm{ false };
-    HDR HDR;
+    HDR HDR{};
     BezierCurve m_bezierCurve {true, 0.0};
 
 };
