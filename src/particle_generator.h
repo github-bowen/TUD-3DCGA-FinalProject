@@ -38,7 +38,7 @@ public:
     // Update all particles
     void Update(float dt, glm::vec2 position, glm::vec2 velocity, unsigned int newParticles, glm::vec2 offset = glm::vec2(0.0f, 0.0f));
     // Render all particles
-    void Draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec2& offset, const glm::vec4& color);
+    void Draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec2& offset);
 
 private:
     // state

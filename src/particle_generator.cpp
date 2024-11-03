@@ -9,7 +9,7 @@
 ParticleGenerator::ParticleGenerator(unsigned int amount)
     : amount(amount)
 {
-    particleMap = loadmap("resources/textures/fire.png");
+    particleMap = loadmap("resources/textures/water.jpg");
     init();
 }
 
@@ -70,40 +70,72 @@ unsigned int ParticleGenerator::firstUnusedParticle()
 }
 
 
+//void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, glm::vec2 velocity, glm::vec2 offset)
+//{
+//    float random = ((rand() % 100) - 50) / 10.0f;
+//    float rColor = 0.5f + ((rand() % 100) / 100.0f);
+//    particle.Position = position + random + offset;
+//    particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
+//    particle.Life = 1.0f;
+//    particle.Velocity = velocity * 0.1f;
+//}
+
 void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, glm::vec2 velocity, glm::vec2 offset)
 {
-    float random = ((rand() % 100) - 50) / 10.0f;
+    float random = ((rand() % 100) - 50) / 100.0f; 
     float rColor = 0.5f + ((rand() % 100) / 100.0f);
-    particle.Position = position + random + offset;
-    particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
-    particle.Life = 1.0f;
-    particle.Velocity = velocity * 0.1f;
+    particle.Position = position + offset; 
+    particle.Color = glm::vec4(1.0f, 0.5f + rColor * 0.5f, 0.0f, 1.0f); 
+    particle.Life = 1.0f; 
+    particle.Velocity = velocity + glm::vec2(random, random * 0.5f); 
 }
 
+//void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity, unsigned int newParticles, glm::vec2 offset)
+//{
+//    // add new particles 
+//    for (unsigned int i = 0; i < newParticles; ++i)
+//    {
+//        int unusedParticle = firstUnusedParticle();
+//        respawnParticle(particles[unusedParticle], position, velocity, offset);
+//    }
+//    // update all particles
+//    for (unsigned int i = 0; i < amount; ++i)
+//    {
+//        Particle& p = particles[i];
+//        p.Life -= dt; // reduce life
+//        if (p.Life > 0.0f)
+//        {	// particle is alive, thus update
+//            p.Position -= p.Velocity * dt;
+//            p.Color.a -= dt * 2.5f;
+//        }
+//    }
+//}
 
 void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity, unsigned int newParticles, glm::vec2 offset)
 {
-    // add new particles 
+    
     for (unsigned int i = 0; i < newParticles; ++i)
     {
         int unusedParticle = firstUnusedParticle();
         respawnParticle(particles[unusedParticle], position, velocity, offset);
     }
-    // update all particles
+    
     for (unsigned int i = 0; i < amount; ++i)
     {
         Particle& p = particles[i];
-        p.Life -= dt; // reduce life
+        p.Life -= dt; 
         if (p.Life > 0.0f)
-        {	// particle is alive, thus update
-            p.Position -= p.Velocity * dt;
+        {
+            
+            p.Position -= p.Velocity * dt; 
             p.Color.a -= dt * 2.5f;
+            p.Velocity.y += 9.81f * dt; 
         }
     }
 }
 
 // render all particles
-void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec2& offset, const glm::vec4& color)
+void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec2& offset)
 {
     // use additive blending to give it a 'glow' effect
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -113,7 +145,7 @@ void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const 
         if (particle.Life > 0.0f)
         {
             glUniform2fv(shader.getUniformLocation("offset"), 1, glm::value_ptr(particle.Position));
-            glUniform4fv(shader.getUniformLocation("color"), 1, glm::value_ptr(particle.Color));
+            
             glUniformMatrix4fv(shader.getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(projection));
             glUniformMatrix4fv(shader.getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
             glUniformMatrix4fv(shader.getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(view));
