@@ -448,7 +448,7 @@ public:
         Particles = new ParticleGenerator(500);
 
         glm::vec2 position(0.1f, 0.2f); // Initial position at screen center
-        glm::vec2 velocity(-1.0f, 0.0f);   // Initial velocity with slight upward motion
+        glm::vec2 velocity(-1.5f, 0.0f);   // Initial velocity with slight upward motion
         glm::vec2 offset(0.0f, 0.0f);        // Offset for initial particle spawning position
         unsigned int newParticles = 20;      // Number of new particles to spawn per frame
         float deltaTime = 0.0f;

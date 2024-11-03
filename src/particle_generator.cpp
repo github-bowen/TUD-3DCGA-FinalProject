@@ -81,6 +81,7 @@ void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, 
 }
 
 
+
 void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity, unsigned int newParticles, glm::vec2 offset)
 {
     
@@ -99,7 +100,7 @@ void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity,
             
             p.Position -= p.Velocity * dt; 
             p.Color.a -= dt * 2.5f;
-            p.Velocity.y += 9.81f * dt; 
+            p.Velocity.y += 3.0f * dt; 
         }
     }
 }

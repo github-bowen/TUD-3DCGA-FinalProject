@@ -12,8 +12,8 @@ uniform vec4 color;
 
 void main()
 {
-    float scale = 0.1f;
+    float scale = 0.07f;
     TexCoords = vertex.zw;
     
-    gl_Position = projection * view * model * vec4((vertex.xy * scale) + offset, 1.8, 1.0);
+    gl_Position = projection * view * model * vec4((vertex.xy * scale) + offset, 2.0, 1.0);
 }
