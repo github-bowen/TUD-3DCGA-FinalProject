@@ -70,16 +70,6 @@ unsigned int ParticleGenerator::firstUnusedParticle()
 }
 
 
-//void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, glm::vec2 velocity, glm::vec2 offset)
-//{
-//    float random = ((rand() % 100) - 50) / 10.0f;
-//    float rColor = 0.5f + ((rand() % 100) / 100.0f);
-//    particle.Position = position + random + offset;
-//    particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
-//    particle.Life = 1.0f;
-//    particle.Velocity = velocity * 0.1f;
-//}
-
 void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, glm::vec2 velocity, glm::vec2 offset)
 {
     float random = ((rand() % 100) - 50) / 100.0f; 
@@ -90,26 +80,6 @@ void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, 
     particle.Velocity = velocity + glm::vec2(random, random * 0.5f); 
 }
 
-//void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity, unsigned int newParticles, glm::vec2 offset)
-//{
-//    // add new particles 
-//    for (unsigned int i = 0; i < newParticles; ++i)
-//    {
-//        int unusedParticle = firstUnusedParticle();
-//        respawnParticle(particles[unusedParticle], position, velocity, offset);
-//    }
-//    // update all particles
-//    for (unsigned int i = 0; i < amount; ++i)
-//    {
-//        Particle& p = particles[i];
-//        p.Life -= dt; // reduce life
-//        if (p.Life > 0.0f)
-//        {	// particle is alive, thus update
-//            p.Position -= p.Velocity * dt;
-//            p.Color.a -= dt * 2.5f;
-//        }
-//    }
-//}
 
 void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity, unsigned int newParticles, glm::vec2 offset)
 {
