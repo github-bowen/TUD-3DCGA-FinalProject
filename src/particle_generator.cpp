@@ -9,7 +9,7 @@
 ParticleGenerator::ParticleGenerator(unsigned int amount)
     : amount(amount)
 {
-    particleMap = loadmap("resources/textures/particle.png");
+    particleMap = loadmap("resources/textures/fire.png");
     init();
 }
 
@@ -103,7 +103,7 @@ void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity,
 }
 
 // render all particles
-void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const glm::vec2& offset, const glm::vec4& color)
+void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec2& offset, const glm::vec4& color)
 {
     // use additive blending to give it a 'glow' effect
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -115,7 +115,8 @@ void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const 
             glUniform2fv(shader.getUniformLocation("offset"), 1, glm::value_ptr(particle.Position));
             glUniform4fv(shader.getUniformLocation("color"), 1, glm::value_ptr(particle.Color));
             glUniformMatrix4fv(shader.getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
+            glUniformMatrix4fv(shader.getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix4fv(shader.getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(view));
 
             glActiveTexture(GL_TEXTURE7);
             glBindTexture(GL_TEXTURE_2D, particleMap);

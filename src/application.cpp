@@ -31,6 +31,9 @@ DISABLE_WARNINGS_POP()
 #include "robot_arm.h"
 #include "bezier_curve.h"
 #include "HDR.h"
+#include "particle_generator.h"
+
+
 
 constexpr int bufferSize = 512;
 bool IBL = false;
@@ -426,6 +429,11 @@ public:
             brdfBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/BRDF_vert.glsl");
             brdfBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/BRDF_frag.glsl");
             m_brdfShader = brdfBuilder.build();
+
+            ShaderBuilder particleBuilder;
+            particleBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/particle_vert.glsl");
+            particleBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/particle_frag.glsl");
+            m_particleShader = particleBuilder.build();
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -434,6 +442,18 @@ public:
     void update()
     {
         int dummyInteger = 0; // Initialized to 0
+
+        for (unsigned int i = 0; i < nr_particles; ++i)
+            particles.push_back(Particle());
+        Particles = new ParticleGenerator(500);
+
+        glm::vec2 position(0.0f, 0.0f); // Initial position at screen center
+        glm::vec2 velocity(2.0f, -1.0f);   // Initial velocity with slight upward motion
+        glm::vec2 offset(0.0f, 0.0f);        // Offset for initial particle spawning position
+        unsigned int newParticles = 10;      // Number of new particles to spawn per frame
+        float deltaTime = 0.0f;
+        float lastFrame = 0.0f;
+
 
         while (!m_window.shouldClose()) {
             // This is your game loop
@@ -492,6 +512,21 @@ public:
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, lights[selectedLightIndex].position);
+
+
+
+
+            float currentFrame = glfwGetTime();
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
+            // Update particles
+            Particles->Update(deltaTime, position, velocity, newParticles, offset);
+            // Draw particles
+            Particles->Draw(m_particleShader, config::m_projectionMatrix, view, model, offset, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+
+
+
+
             
             if (see_robot_arm) {
                 static bool wasAnimating = false;
@@ -543,6 +578,7 @@ public:
                 }
             }
 
+           
             // Bezier curves
 			if (m_bezierCurve.showBezierPath) {
                 // FIXME: directly apply bezier curve at the first light
@@ -688,7 +724,7 @@ private:
     Shader m_HDRconvShader;
     Shader m_HDRpreShader;
     Shader m_brdfShader;
-
+    Shader m_particleShader;
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
@@ -712,7 +748,11 @@ private:
     bool see_robot_arm{ false };
     HDR m_HDR{};
     BezierCurve m_bezierCurve {true, 0.0};
+    ParticleGenerator* Particles;
+    unsigned int nr_particles = 500;
+    std::vector<Particle> particles;
 
+    
 };
 
 int main()
