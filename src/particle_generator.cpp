@@ -20,29 +20,58 @@ ParticleGenerator::~ParticleGenerator() {
 }
 
 
+//void ParticleGenerator::init()
+//{
+//    float particle_quad[] = {
+//        0.0f, 1.0f, 0.0f, 1.0f,
+//        1.0f, 0.0f, 1.0f, 0.0f,
+//        0.0f, 0.0f, 0.0f, 0.0f,
+//
+//        0.0f, 1.0f, 0.0f, 1.0f,
+//        1.0f, 1.0f, 1.0f, 1.0f,
+//        1.0f, 0.0f, 1.0f, 0.0f
+//    };
+//    glGenVertexArrays(1, &particle_vao);
+//    glGenBuffers(1, &particle_vbo);
+//    glBindVertexArray(particle_vao);
+//    // fill mesh buffer
+//    glBindBuffer(GL_ARRAY_BUFFER, particle_vbo);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(particle_quad), particle_quad, GL_STATIC_DRAW);
+//    // set mesh attributes
+//    glEnableVertexAttribArray(0);
+//    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+//    glBindVertexArray(0);
+//
+//    // create this->amount default particle instances
+//    for (unsigned int i = 0; i < amount; ++i)
+//        particles.push_back(Particle());
+//}
+
 void ParticleGenerator::init()
 {
-    float particle_quad[] = {
-        0.0f, 1.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f,
+    const int circleVertexCount = 36; // number of segments for the circle
+    std::vector<float> circleVertices;
 
-        0.0f, 1.0f, 0.0f, 1.0f,
-        1.0f, 1.0f, 1.0f, 1.0f,
-        1.0f, 0.0f, 1.0f, 0.0f
-    };
+    // Generate circle vertices
+    for (int i = 0; i < circleVertexCount; ++i)
+    {
+        float angle = 2.0f * glm::pi<float>() * float(i) / float(circleVertexCount);
+        circleVertices.push_back(0.5 * cos(angle)); // x
+        circleVertices.push_back(0.5 * sin(angle)); // y
+        circleVertices.push_back(0.0f);       // z
+        circleVertices.push_back(1.0f);       // texture coordinates (u, v)
+    }
+
+    // Create and set up the vertex array object and vertex buffer object
     glGenVertexArrays(1, &particle_vao);
     glGenBuffers(1, &particle_vbo);
     glBindVertexArray(particle_vao);
-    // fill mesh buffer
     glBindBuffer(GL_ARRAY_BUFFER, particle_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(particle_quad), particle_quad, GL_STATIC_DRAW);
-    // set mesh attributes
+    glBufferData(GL_ARRAY_BUFFER, circleVertices.size() * sizeof(float), circleVertices.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glBindVertexArray(0);
 
-    // create this->amount default particle instances
     for (unsigned int i = 0; i < amount; ++i)
         particles.push_back(Particle());
 }
@@ -106,17 +135,43 @@ void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity,
 }
 
 // render all particles
+//void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec2& offset)
+//{
+//    // use additive blending to give it a 'glow' effect
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+//    shader.bind();
+//    for (Particle particle : particles)
+//    {
+//        if (particle.Life > 0.0f)
+//        {
+//            glUniform2fv(shader.getUniformLocation("offset"), 1, glm::value_ptr(particle.Position));
+//            
+//            glUniformMatrix4fv(shader.getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(projection));
+//            glUniformMatrix4fv(shader.getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
+//            glUniformMatrix4fv(shader.getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(view));
+//
+//            glActiveTexture(GL_TEXTURE7);
+//            glBindTexture(GL_TEXTURE_2D, particleMap);
+//            glUniform1i(shader.getUniformLocation("sprite"), 7);
+//
+//            glBindVertexArray(particle_vao);
+//            glDrawArrays(GL_TRIANGLES, 0, 6);
+//            glBindVertexArray(0);
+//        }
+//    }
+//    // don't forget to reset to default blending mode
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//}
 void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec2& offset)
 {
-    // use additive blending to give it a 'glow' effect
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     shader.bind();
+
     for (Particle particle : particles)
     {
         if (particle.Life > 0.0f)
         {
             glUniform2fv(shader.getUniformLocation("offset"), 1, glm::value_ptr(particle.Position));
-            
             glUniformMatrix4fv(shader.getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(projection));
             glUniformMatrix4fv(shader.getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
             glUniformMatrix4fv(shader.getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -126,11 +181,11 @@ void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const 
             glUniform1i(shader.getUniformLocation("sprite"), 7);
 
             glBindVertexArray(particle_vao);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 36); // Draw the circle using triangle fan
             glBindVertexArray(0);
         }
     }
-    // don't forget to reset to default blending mode
+
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
