@@ -120,14 +120,6 @@ public:
         this->__init_shader();
     }
 
-    /*~Application() {
-        delete normalMap;
-        delete albedoMap;
-        delete roughnessMap;
-        delete metallicMap;
-        delete aoMap;
-    }*/
-
     void imgui() {
 
         if (!config::show_imgui)
@@ -424,6 +416,16 @@ public:
             HDRconvBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/HDRcube_vert.glsl");
             HDRconvBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/HDRconv_frag.glsl");
             m_HDRconvShader = HDRconvBuilder.build();
+
+            ShaderBuilder HDRpreBuilder;
+            HDRpreBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/HDRcube_vert.glsl");
+            HDRpreBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/HDRpre_frag.glsl");
+            m_HDRpreShader = HDRpreBuilder.build();
+
+            ShaderBuilder brdfBuilder;
+            brdfBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/BRDF_vert.glsl");
+            brdfBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/BRDF_frag.glsl");
+            m_brdfShader = brdfBuilder.build();
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -441,6 +443,8 @@ public:
                 m_HDR.equiMap = equiMap;
                 m_HDR.equiToCube(m_HDRcubeShader);
                 m_HDR.cubeToConv(m_HDRconvShader);
+                m_HDR.cubeToPre(m_HDRpreShader);
+                m_HDR.brdfLUT(m_brdfShader);
                 HDRupdated = false;
             }
             glm::ivec2 windowSize = m_window.getFrameBufferSize();
@@ -463,6 +467,7 @@ public:
             // ...
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LEQUAL);
+            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             //glEnable(GL_BLEND);
 
             const glm::mat4 view = m_cameras[config::activeCameraIndex].viewMatrix();
@@ -600,6 +605,12 @@ public:
                     glActiveTexture(GL_TEXTURE13);
                     glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDR.irradianceMap);
                     glUniform1i(m_pbrShader.getUniformLocation("irradianceMap"), 13);
+                    glActiveTexture(GL_TEXTURE15);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDR.prefilterMap);
+                    glUniform1i(m_pbrShader.getUniformLocation("prefilterMap"), 15);
+                    glActiveTexture(GL_TEXTURE16);
+                    glBindTexture(GL_TEXTURE_2D, m_HDR.brdfTex);
+                    glUniform1i(m_pbrShader.getUniformLocation("brdfTex"), 16);
                 }
                 mesh.draw(m_pbrShader);
             }
@@ -675,6 +686,8 @@ private:
     Shader m_HDRcubeShader;
     Shader m_HDRsceneShader;
     Shader m_HDRconvShader;
+    Shader m_HDRpreShader;
+    Shader m_brdfShader;
 
 
     std::vector<GPUMesh> m_meshes;

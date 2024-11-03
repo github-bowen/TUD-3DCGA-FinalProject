@@ -2,6 +2,7 @@
 
 #define MAX_LIGHTS 10
 const float PI = 3.14159265359;
+const float MAX_REF_LOD = 4.0;
 
 out vec4 FragColor;
 in vec3 fragPosition;
@@ -47,6 +48,8 @@ uniform int shadingMode;
 uniform bool useMaterial;
 
 uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D brdfTex;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
@@ -101,6 +104,7 @@ void main()
         N = normalize(TBN * N);
     }
     vec3 V = normalize(cameraPos - fragPosition);
+    vec3 R = reflect(-V, N);
     vec3 localAlbedo = albedo;
     float localRoughness = roughness;
     float localMetallic = metallic;
@@ -150,13 +154,20 @@ void main()
         simpleLam += kd * lamDiff * lights[i].color;
     }
 
-    vec3 IBLDkS = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness); 
+    vec3 IBLDkS = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, localRoughness); 
     vec3 IBLDkD = 1.0 - IBLDkS;
+    IBLDkD *= 1.0 - localMetallic;
     vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse = irradiance * localAlbedo;
+
+    vec3 preColor = textureLod(prefilterMap, R, localRoughness*MAX_REF_LOD).rgb;
+    vec3 IBLSF = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, localRoughness);
+    vec2 envBRDF = texture(brdfTex, vec2(max(dot(N, V), 0.0), localRoughness)).rg;
+    vec3 IBLspecular = preColor * (IBLSF*envBRDF.x + envBRDF.y);
+
     vec3 ambient = vec3(0.03);
     if(!IBL)    ambient = vec3(0.03) * localAlbedo * localAo;
-    else if(IBL)    ambient = (IBLDkD * diffuse) * localAo;
+    else if(IBL)    ambient = (IBLDkD * diffuse + IBLspecular) * localAo;
     vec3 color = ambient + Lo;
 
     color = color / (color + vec3(1.0));
