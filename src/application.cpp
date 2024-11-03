@@ -315,6 +315,9 @@ public:
             ImGui::EndDisabled();
         ImGui::EndDisabled();
 
+        ImGui::Separator();
+        ImGui::Checkbox("See Particle Effect", &see_particle_effect);
+
         ImGui::End();
     }
 
@@ -515,14 +518,15 @@ public:
 
 
 
-
-            float currentFrame = glfwGetTime();
-            deltaTime = currentFrame - lastFrame;
-            lastFrame = currentFrame;
-            // Update particles
-            Particles->Update(deltaTime, position, velocity, newParticles, offset);
-            // Draw particles
-            Particles->Draw(m_particleShader, config::m_projectionMatrix, view, model, offset);
+            if (see_particle_effect) {
+                float currentFrame = glfwGetTime();
+                deltaTime = currentFrame - lastFrame;
+                lastFrame = currentFrame;
+                // Update particles
+                Particles->Update(deltaTime, position, velocity, newParticles, offset);
+                // Draw particles
+                Particles->Draw(m_particleShader, config::m_projectionMatrix, view, model, offset);
+            }
 
 
 
@@ -751,7 +755,7 @@ private:
     ParticleGenerator* Particles;
     unsigned int nr_particles = 500;
     std::vector<Particle> particles;
-
+    bool see_particle_effect{ false };
     
 };
 
