@@ -75,14 +75,26 @@ unsigned int ParticleGenerator::firstUnusedParticle()
 
 void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, glm::vec2 velocity, glm::vec2 offset)
 {
-    float random = ((rand() % 100) - 50) / 100.0f;
-    float rColor = 0.5f + ((rand() % 100) / 100.0f);
+    
+    float coneAngle = glm::radians(30.0f);
+
+    
+    float randomAngle = (static_cast<float>(rand()) / RAND_MAX) * 2 * coneAngle - coneAngle;
+
+   
+    glm::vec2 direction = glm::vec2(
+        cos(randomAngle) * velocity.x - sin(randomAngle) * velocity.y,
+        sin(randomAngle) * velocity.x + cos(randomAngle) * velocity.y
+    );
+
+    
     particle.Position = position + offset;
-    particle.Color = glm::vec4(1.0f, 0.5f + rColor * 0.5f, 0.0f, 1.0f);
+    particle.Color = glm::vec4(1.0f, 0.5f + ((rand() % 100) / 100.0f) * 0.5f, 0.0f, 1.0f);
     particle.Life = 1.0f;
-    particle.Velocity = velocity + glm::vec2(random, random * 0.5f);
-    particle.Radius = 1.0f; 
+    particle.Velocity = direction * glm::length(velocity);  
+    particle.Radius = 1.0f;
 }
+
 
 
 
