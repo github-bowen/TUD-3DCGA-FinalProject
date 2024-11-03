@@ -9,11 +9,16 @@ uniform mat4 view;
 uniform mat4 model;
 uniform vec2 offset;
 uniform vec4 color;
+uniform float radius; // New uniform for the radius
+uniform float life;   // New uniform for the particle's life
+
 
 void main()
 {
     float scale = 0.07f;
     TexCoords = vertex.zw;
     
-    gl_Position = projection * view * model * vec4((vertex.xy * scale) + offset, 2.0, 1.0);
+    // Calculate the size based on life; you can adjust the growth factor
+    float size = scale * radius * (life > 0.0 ? life : 0.0); // Prevent negative size
+    gl_Position = projection * view * model * vec4((vertex.xy * size) + offset, 2.0, 1.0);
 }

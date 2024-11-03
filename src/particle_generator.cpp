@@ -20,6 +20,7 @@ ParticleGenerator::~ParticleGenerator() {
 }
 
 
+
 void ParticleGenerator::init()
 {
     const int circleVertexCount = 36; // number of segments for the circle
@@ -29,10 +30,10 @@ void ParticleGenerator::init()
     for (int i = 0; i < circleVertexCount; ++i)
     {
         float angle = 2.0f * glm::pi<float>() * float(i) / float(circleVertexCount);
-        circleVertices.push_back(0.5 * cos(angle)); // x
-        circleVertices.push_back(0.5 * sin(angle)); // y
-        circleVertices.push_back(0.0f);       // z
-        circleVertices.push_back(1.0f);       // texture coordinates (u, v)
+        circleVertices.push_back(cos(angle)); // x
+        circleVertices.push_back(sin(angle)); // y
+        circleVertices.push_back(0.0f);                // z
+        circleVertices.push_back(1.0f);                // texture coordinates (u, v)
     }
 
     // Create and set up the vertex array object and vertex buffer object
@@ -74,49 +75,56 @@ unsigned int ParticleGenerator::firstUnusedParticle()
 
 void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, glm::vec2 velocity, glm::vec2 offset)
 {
-    float random = ((rand() % 100) - 50) / 100.0f; 
+    float random = ((rand() % 100) - 50) / 100.0f;
     float rColor = 0.5f + ((rand() % 100) / 100.0f);
-    particle.Position = position + offset; 
-    particle.Color = glm::vec4(1.0f, 0.5f + rColor * 0.5f, 0.0f, 1.0f); 
-    particle.Life = 1.0f; 
-    particle.Velocity = velocity + glm::vec2(random, random * 0.5f); 
+    particle.Position = position + offset;
+    particle.Color = glm::vec4(1.0f, 0.5f + rColor * 0.5f, 0.0f, 1.0f);
+    particle.Life = 1.0f;
+    particle.Velocity = velocity + glm::vec2(random, random * 0.5f);
+    particle.Radius = 0.5f; 
 }
 
 
 
 void ParticleGenerator::Update(float dt, glm::vec2 position, glm::vec2 velocity, unsigned int newParticles, glm::vec2 offset)
 {
-    
     for (unsigned int i = 0; i < newParticles; ++i)
     {
         int unusedParticle = firstUnusedParticle();
         respawnParticle(particles[unusedParticle], position, velocity, offset);
     }
-    
+
     for (unsigned int i = 0; i < amount; ++i)
     {
         Particle& p = particles[i];
-        p.Life -= dt; 
+        p.Life -= dt;
         if (p.Life > 0.0f)
         {
-            
-            p.Position -= p.Velocity * dt; 
+            p.Position -= p.Velocity * dt;
             p.Color.a -= dt * 2.5f;
-            p.Velocity.y += 3.0f * dt; 
+            p.Velocity.y += 3.0f * dt;
+
+            
+            p.Radius += dt; 
         }
     }
 }
+
 
 void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec2& offset)
 {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     shader.bind();
 
-    for (Particle particle : particles)
+    for (Particle& particle : particles) 
     {
         if (particle.Life > 0.0f)
         {
+            // Pass the offset, radius, and life to the shader
             glUniform2fv(shader.getUniformLocation("offset"), 1, glm::value_ptr(particle.Position));
+            glUniform1f(shader.getUniformLocation("radius"), 1.0f); 
+            glUniform1f(shader.getUniformLocation("life"), particle.Life); // Particle's life
+
             glUniformMatrix4fv(shader.getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(projection));
             glUniformMatrix4fv(shader.getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
             glUniformMatrix4fv(shader.getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -133,6 +141,7 @@ void ParticleGenerator::Draw(Shader& shader, const glm::mat4& projection, const 
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
+
 
 unsigned int ParticleGenerator::loadmap(char const* path)
 {
