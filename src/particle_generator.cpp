@@ -81,7 +81,7 @@ void ParticleGenerator::respawnParticle(Particle& particle, glm::vec2 position, 
     particle.Color = glm::vec4(1.0f, 0.5f + rColor * 0.5f, 0.0f, 1.0f);
     particle.Life = 1.0f;
     particle.Velocity = velocity + glm::vec2(random, random * 0.5f);
-    particle.Radius = 0.5f; 
+    particle.Radius = 1.0f; 
 }
 
 

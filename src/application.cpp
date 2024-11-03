@@ -22,6 +22,7 @@ DISABLE_WARNINGS_POP()
 #include <vector>
 #include <stb/stb_image.h>
 
+
 #include "config.h"
 #include "scene.h"
 #include "camera.h"
@@ -317,6 +318,15 @@ public:
 
         ImGui::Separator();
         ImGui::Checkbox("See Particle Effect", &see_particle_effect);
+        // Control for position
+        ImGui::Text("Position");
+        ImGui::SliderFloat("Position X", &position.x, -10.0f, 10.0f);
+        ImGui::SliderFloat("Position Y", &position.y, -10.0f, 10.0f);
+
+        // Control for velocity
+        ImGui::Text("Velocity");
+        ImGui::SliderFloat("Velocity X", &velocity.x, -5.0f, 5.0f);
+        ImGui::SliderFloat("Velocity Y", &velocity.y, -5.0f, 5.0f);
 
         ImGui::End();
     }
@@ -450,8 +460,8 @@ public:
             particles.push_back(Particle());
         Particles = new ParticleGenerator(500);
 
-        glm::vec2 position(0.1f, 0.2f); // Initial position at screen center
-        glm::vec2 velocity(-1.5f, 0.0f);   // Initial velocity with slight upward motion
+        //glm::vec2 position(0.1f, 0.2f); // Initial position at screen center
+        //glm::vec2 velocity(-1.5f, 0.0f);   // Initial velocity with slight upward motion
         glm::vec2 offset(0.0f, 0.0f);        // Offset for initial particle spawning position
         unsigned int newParticles = 20;      // Number of new particles to spawn per frame
         float deltaTime = 0.0f;
@@ -756,6 +766,8 @@ private:
     unsigned int nr_particles = 500;
     std::vector<Particle> particles;
     bool see_particle_effect{ false };
+    glm::vec2 position{ 0.1f, 0.26f }; // Initial position at screen center
+    glm::vec2 velocity{ -1.5f, 0.0f };   // Initial velocity with slight upward motion
     
 };
 
