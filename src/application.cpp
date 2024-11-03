@@ -29,6 +29,7 @@ DISABLE_WARNINGS_POP()
 #include "light.h"
 #include "robot_arm.h"
 #include "bezier_curve.h"
+#include "glow.h"
 
 constexpr int bufferSize = 512;
 
@@ -387,16 +388,85 @@ public:
             pbrBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/pbr_frag.glsl");
             m_pbrShader = pbrBuilder.build();
 
+            ShaderBuilder lightBoxBuilder;
+            lightBoxBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/basic_vert.glsl");
+            lightBoxBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/lightbox_frag.glsl");
+            m_lightboxShader = lightBoxBuilder.build();
+
+            ShaderBuilder blurBuilder;
+            blurBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/blur_vert.glsl");
+            blurBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/blur_frag.glsl");
+            m_blurShader = blurBuilder.build();
+
+            ShaderBuilder bloomBuilder;
+            bloomBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/bloom_vert.glsl");
+            bloomBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/bloom_frag.glsl");
+            m_bloomShader = bloomBuilder.build();
+
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
     }
 
+
     void update()
     {
         int dummyInteger = 0; // Initialized to 0
 
+        
+        unsigned int hdrFBO;
+        glGenFramebuffers(1, &hdrFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+
+
+        unsigned int colorBuffers[2];
+        glGenTextures(2, colorBuffers);
+        for (unsigned int i = 0; i < 2; i++)
+        {
+            glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 1024, 1024, 0, GL_RGBA, GL_FLOAT, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+        }
+
+        unsigned int rboDepth;
+        glGenRenderbuffers(1, &rboDepth);
+        glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 1024);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+        // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
+        unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+        glDrawBuffers(2, attachments);
+
+        // finally check if framebuffer is complete
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "Framebuffer not complete!" << std::endl;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        unsigned int pingpongFBO[2];
+        unsigned int pingpongColorbuffers[2];
+        glGenFramebuffers(2, pingpongFBO);
+        glGenTextures(2, pingpongColorbuffers);
+        for (unsigned int i = 0; i < 2; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+            glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 1024, 1024, 0, GL_RGBA, GL_FLOAT, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorbuffers[i], 0);
+
+            // also check if framebuffers are complete (no need for depth buffer)
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+                std::cout << "Framebuffer not complete!" << std::endl;
+        }
+       
 
         while (!m_window.shouldClose()) {
             // This is your game loop
@@ -415,26 +485,81 @@ public:
             glEnable(GL_DEPTH_TEST);
             //glEnable(GL_BLEND);
 
+
+            
+
             const glm::mat4 view = m_cameras[config::activeCameraIndex].viewMatrix();
             const glm::mat4 mvpMatrix = config::m_projectionMatrix * view * config::m_modelMatrix;
             // Normals should be transformed differently than positions (ignoring translations + dealing with scaling):
             // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
             const glm::mat3 normalModelMatrix = config::normalModelMatrix;
 
+
+
+
             // render scene: remove translation from the view matrix
             glm::mat4 sceneView = glm::mat4(glm::mat3(view));
-            m_scene.draw(m_sceneShader, config::m_projectionMatrix, sceneView, config::textureSlots.at("scene"));
+            
 
             Camera& currentCamera = m_cameras[config::activeCameraIndex];
             glm::vec3 cameraPos = currentCamera.cameraPos();
+
+            
+            
+
+            m_scene.draw(m_sceneShader, config::m_projectionMatrix, sceneView, config::textureSlots.at("scene"));
+
+
             m_cube.draw(m_cubeShader, config::m_modelMatrix, config::normalModelMatrix, view, 
                 config::m_projectionMatrix, cameraPos, config::textureSlots.at("cube"));
 
+            
             // Assuming you want to rotate around the x-axis by 90 degrees
             glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around the x-axis
             model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::translate(model, glm::vec3(0.0, 0.0, -2.0));
             m_wall.draw(m_wallShader, config::m_projectionMatrix, view, model, cameraPos, lights[selectedLightIndex].position);
+
+         
+            glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            m_glow.drawLightBox(m_lightboxShader, config::m_modelMatrix, view, config::m_projectionMatrix, glm::vec3(10.0f, 0.0f, 0.0f), cameraPos);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+         
+            bool horizontal = true, first_iteration = true;
+            m_blurShader.bind();    
+            glUniform1i(m_blurShader.getUniformLocation("brightTexture"), 5);
+
+            for (unsigned int i = 0; i < 10; i++)
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+
+                glUniform1i(m_blurShader.getUniformLocation("horizontal"), horizontal);
+                glActiveTexture(GL_TEXTURE5);
+                glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
+             
+                m_glow.setupQuad();
+                
+                horizontal = !horizontal;
+                if (first_iteration)
+                    first_iteration = false;
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            m_bloomShader.bind();
+            glUniform1i(m_bloomShader.getUniformLocation("scene"), 5);
+            glUniform1i(m_bloomShader.getUniformLocation("bloomBlur"), 6);
+            glActiveTexture(GL_TEXTURE5);
+            glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+            glActiveTexture(GL_TEXTURE6);
+            glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
+            glUniform1i(m_bloomShader.getUniformLocation("bloom"), 1);
+            glUniform1f(m_bloomShader.getUniformLocation("exposure"), 0.2f);
+            //m_glow.setupQuad();
+            
+            
+            
             
             /*if (see_robot_arm) {
                 std::vector<ArmSegment> armSegments{
@@ -628,6 +753,9 @@ private:
     Shader m_robotShader;
     Shader m_lightShader;
     Shader m_pbrShader;
+    Shader m_lightboxShader;
+    Shader m_blurShader;
+    Shader m_bloomShader;
 
 
     std::vector<GPUMesh> m_meshes;
@@ -652,11 +780,17 @@ private:
     bool see_robot_arm{ false };
 
     BezierCurve m_bezierCurve {true, 0.0};
+
+    Glow m_glow;
 };
 
 int main()
 {
     Application app;
+
+
+
+
     app.update();
 
     return 0;

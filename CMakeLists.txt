@@ -20,7 +20,7 @@ add_executable(Master_TechDemo
 	"src/camera.cpp" 
 	"src/light.h" 
 	"src/light.cpp" 
-	"src/bezier_curve.cpp")
+	"src/bezier_curve.cpp" "src/glow.cpp" "src/glow.h")
 
 
 target_compile_definitions(Master_TechDemo PRIVATE RESOURCE_ROOT="${CMAKE_CURRENT_LIST_DIR}/")
