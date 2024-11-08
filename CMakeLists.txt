@@ -20,7 +20,12 @@ add_executable(Master_TechDemo
 	"src/camera.cpp" 
 	"src/light.h" 
 	"src/light.cpp" 
-	"src/bezier_curve.cpp" "src/HDR.h" "src/HDR.cpp" "src/particle_generator.cpp")
+	"src/bezier_curve.cpp" 
+	"src/HDR.h" 
+	"src/HDR.cpp" 
+	"src/particle_generator.cpp" 
+	"src/minimap.h" 
+	"src/minimap.cpp")
 
 target_compile_definitions(Master_TechDemo PRIVATE RESOURCE_ROOT="${CMAKE_CURRENT_LIST_DIR}/")
 target_compile_features(Master_TechDemo PRIVATE cxx_std_20)
