@@ -49,6 +49,10 @@ public:
 
 	GLuint getTexture() const { return m_texture; }
 
+	int getWidth() const { return m_width; }
+
+	int getHeight() const { return m_height; }
+
 private:
     GLuint m_texture;          // The texture to store the minimap
     GLuint m_framebuffer;      // The framebuffer used to render the minimap texture

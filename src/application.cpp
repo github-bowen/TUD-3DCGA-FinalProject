@@ -505,10 +505,15 @@ public:
 
 			// Render to framebuffer for minimap
             glBindFramebuffer(GL_FRAMEBUFFER, m_minimap.getFramebuffer());
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glViewport(x, y, m_minimap.getTextureWidth(), m_minimap.getTextureHeight());
-            m_minimap.draw(m_minimapShader, config::m_modelMatrix, minimapView, minimapProjection); // Draw the minimap texture
+            int minimapViewportSize = 200;
+            int minimapX = windowSize.x - minimapViewportSize - 20;
+            int minimapY = windowSize.y - minimapViewportSize - 20;
+
+            glViewport(minimapX, minimapY, minimapViewportSize, minimapViewportSize);
+
+            m_minimap.draw(m_minimapShader, config::m_modelMatrix, minimapView, minimapProjection);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
