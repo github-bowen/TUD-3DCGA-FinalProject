@@ -1,67 +1,35 @@
-# Project Feature Tracker
+# 3DCGA Final Project
 
-## Implemented Features
+## 1. Implemented Features
 
-### Minimal Features
+### 1.1. Minimal Features
 
-- **Multiple Viewpoints** (10/21/2024)
-
-- **Cube Mapping (Scene Loading)** (10/22/2024)
-  - Implemented WASD movement in Camera class
-  - ~~TODO: Bugs after closing the window~~ (Fixed)
-
-- **Normal mapping**
-
-- **Environment mapping**
-
+- **Multiple Viewpoints**
+- **Cube Mapping (Scene Loading)**
+  - Implemented WASDRF movement in Camera class
+- **Normal Mapping**
+- **Environment Mapping**
 - **Shading**:
-  - Simple shading: Lambert + Blinn-Phong;
-  - Advanced shading: Textured PBR;
-  - All with normal mapping.
-  
-- **Material textures**:
-  - kd, ks, and shininess for simple shading;
-  - Albedo, roughness, metallic, and ambient occlusion for PBR.
- 
-- **Hierarchical transformations**:
-  - Animated robot arm with several components.
-  - Animation is done via code (not imported from external software).
+  - Simple shading: Lambert + Blinn-Phong
+  - Advanced shading: Textured PBR
+  - Both include normal mapping
+- **Material Textures**:
+  - `kd`, `ks`, and shininess for simple shading
+  - Albedo, roughness, metallic, and ambient occlusion for PBR
+- **Hierarchical Transformations**:
+  - Animated robot arm with several components (animation is code-driven, not imported from external software)
+- **Smooth Paths (basic Bézier curves)**
 
-- **Bezier Curves (minimal part)**
+### 1.2. Extra Features (Optional)
 
-### Extra Features (Optional)
+- **Bézier Curves (extra part, moving at constant speed along a Bézier curve)**
+- **Image-Based Lighting**
+- **Particle Effects (explosions, magic spells, fire)**
 
-- **Bezier Curves (extra part, moving at constant speed along a Bezier curve)**
+## 2. References
 
----
-
-## Upcoming Features
-
-### Minimal Features
-
-- All minimal features have been completed.
-
-### Extra Features (Optional)
-
-- [ ] Shadows for multiple light sources.
-- [ ] Shadows from environment maps.
-- [ ] Particle effects (e.g., explosions, magic spells, fire).
-- [ ] Procedurally generated terrains.
-- [ ] Post-processing effects (e.g., glow).
-- [ ] Procedurally generated water surfaces (using vertex shader).
-- [ ] Animated textures with appropriate framerate.
-- [ ] Changing lighting conditions (day-night system).
-- [ ] Implement a minimap.
-- [ ] Collision detection between player and objects.
-- [ ] Procedurally generate a maze or dungeon.
-- [ ] Procedurally generate environment props (buildings).
-- [ ] Inverse kinematics.
-- [ ] Linear Blend Skinning in shaders.
-- [ ] Blend shapes in shaders.
-- [ ] Screen Space Ray Tracing (SSRT) for specular reflections.
-- [ ] Ambient Occlusion.
-- [ ] Spatial-temporal reprojection.
-
-## Assets & References
-
-- [ ] Use 3D models and textures (with correct rights and references).
+- [LearnOpenGL - Cubemaps](https://learnopengl.com/Advanced-OpenGL/Cubemaps)
+- [LearnOpenGL - Diffuse irradiance](https://learnopengl.com/PBR/IBL/Diffuse-irradiance)
+- [LearnOpenGL - Normal Mapping](https://learnopengl.com/Advanced-Lighting/Normal-Mapping)
+- [LearnOpenGL - Particles](https://learnopengl.com/In-Practice/2D-Game/Particles)
+- [Medium - Bézier Curve](https://omaraflak.medium.com/b%C3%A9zier-curve-bfffdadea212)
