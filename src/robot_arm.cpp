@@ -10,7 +10,7 @@
 #include <iostream>
 #include <filesystem>
 
-// ¹¹Ôìº¯Êý
+
 ArmSegment::ArmSegment() : rotationX(0.0f), boxSize(1.0f, 1.0f, 1.0f) {
     setupArmSegment();
 }
@@ -44,36 +44,49 @@ glm::mat4 ArmSegment::scaleMatrix(const glm::vec3& scale)
 
 std::vector<glm::mat4> ArmSegment::computeTransformMatrix(const std::vector<ArmSegment>& armSegments)
 {
-
+    // Create a vector to hold the transformation matrices for each arm segment
     std::vector<glm::mat4> transforms;
+
+    // Create a list to store the arm segments' pointers for iterative transformation
     std::list<const ArmSegment*> seglist;
+
+    // Define the axis of rotation (assuming rotation is around the x-axis)
     glm::vec3 axis{ 1, 0, 0 };
+
+    // Initialize the rotation matrix as identity
     glm::mat4 rotate = glm::identity<glm::mat4>();
 
 
     for (const ArmSegment& armSegment : armSegments) {
         glm::mat4 matrix = glm::identity<glm::mat4>();
+
         glm::mat4 scale = scaleMatrix(armSegment.boxSize);
+
         rotate = rotationMatrix(armSegment.rotationX, axis) * rotate;
-        // glm::mat4 originM = translationMatrix({ -0.5 * armSegment.boxSize.x,-0.5 * armSegment.boxSize.y,0 });
+
         glm::mat4 translationall = glm::identity<glm::mat4>();
         float translateangle = 0.0;
 
-
+        // Iterate over previously processed arm segments to accumulate translation values
         for (const ArmSegment* segment : seglist) {
+            // Accumulate the rotation angles of previous segments
             translateangle += segment->rotationX;
+
+            // Apply the translation based on the accumulated rotation
             translationall = translationMatrix({ 0,segment->boxSize.z * std::sin(-translateangle),segment->boxSize.z * std::cos(translateangle) }) * translationall;
         }
+
         seglist.push_back(&armSegment);
 
         matrix = translationall * rotate * scale;
 
-
+        // Add the resulting transformation matrix to the list of transforms
         transforms.push_back(matrix);
-
     }
+
     return transforms;
 }
+
 
 
 
@@ -128,14 +141,7 @@ void ArmSegment::draw(Shader& shader, const glm::mat4& modelMatrix, const glm::m
 
 }
 
-//void ArmSegment::animate(float deltaTime) {
-//    float rotationSpeed = 10.0f;  
-//    rotationX += glm::radians(rotationSpeed) * deltaTime;
-//
-//    if (rotationX >= 2 * glm::pi<float>()) rotationX -= 2 * glm::pi<float>();
-//    if (rotationX < -2 * glm::pi<float>()) rotationX += 2 * glm::pi<float>();
-//    
-//}
+
 void ArmSegment::animate(float deltaTime) {
     static float rotationSpeed = 10.0f;  
     static bool rotationDirection = true;  

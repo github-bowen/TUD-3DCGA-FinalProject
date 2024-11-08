@@ -50,6 +50,9 @@ void ParticleGenerator::init()
         particles.push_back(Particle());
 }
 
+// A key reference for learning and implementing particle effects is the article by Joey de Vries on his website LearnOpenGL: 
+// https://learnopengl.com/In-Practice/2D-Game/Particles
+
 unsigned int lastUsedParticle = 0;
 unsigned int ParticleGenerator::firstUnusedParticle()
 {
