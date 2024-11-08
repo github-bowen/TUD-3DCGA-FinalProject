@@ -24,7 +24,7 @@ public:
     void draw(Shader& shader, const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, const glm::vec3& viewPos, const glm::vec3& lightPos);
 
 private:
-    //std::vector<Image> images;
+ 
     unsigned int diffuseMap;
     unsigned int normalMap;
     GLuint m_quad_vao, m_quad_vbo;

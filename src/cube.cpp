@@ -38,7 +38,7 @@ void Cube::loadCubemap() {
     glGenTextures(1, &m_cube_map_texture);
     glBindTexture(GL_TEXTURE_CUBE_MAP, m_cube_map_texture);
 
-    // 对正面 (Right face)
+    // (Right face)
     glTexImage2D(
         GL_TEXTURE_CUBE_MAP_POSITIVE_X,
         0,  // mipmap level
@@ -50,7 +50,7 @@ void Cube::loadCubemap() {
         images[0].get_data()
     );
 
-    // 对背面 (Left face)
+    // (Left face)
     glTexImage2D(
         GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
         0,  // mipmap level
@@ -62,7 +62,7 @@ void Cube::loadCubemap() {
         images[1].get_data()
     );
 
-    // 对顶部 (Top face)
+    // (Top face)
     glTexImage2D(
         GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
         0,  // mipmap level
@@ -74,7 +74,7 @@ void Cube::loadCubemap() {
         images[2].get_data()
     );
 
-    // 对底部 (Bottom face)
+    // (Bottom face)
     glTexImage2D(
         GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
         0,  // mipmap level
@@ -86,7 +86,7 @@ void Cube::loadCubemap() {
         images[3].get_data()
     );
 
-    // 对前面 (Front face)
+    // (Front face)
     glTexImage2D(
         GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
         0,  // mipmap level
@@ -98,7 +98,7 @@ void Cube::loadCubemap() {
         images[4].get_data()
     );
 
-    // 对后面 (Back face)
+    // (Back face)
     glTexImage2D(
         GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
         0,  // mipmap level
@@ -119,6 +119,8 @@ void Cube::loadCubemap() {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 }
 
+// A key reference for learning and implementing environment mapping is the article by Joey de Vries on his website LearnOpenGL: 
+// https://learnopengl.com/Advanced-OpenGL/Cubemaps
 
 
 void Cube::setupCube() {

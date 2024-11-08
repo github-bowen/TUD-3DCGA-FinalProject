@@ -21,12 +21,9 @@
 class ArmSegment {
 public:
     
-    // 默认构造函数
+    
     ArmSegment();
 
-	//ArmSegment(const ArmSegment&) = delete;  // NOTE: disable copy constructor
-
-    // 带参数的构造函数
     ArmSegment(float angle, const glm::vec3& size);
 
     ~ArmSegment();

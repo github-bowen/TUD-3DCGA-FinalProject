@@ -56,6 +56,9 @@ unsigned int Wall::loadWallmap(char const* path)
     return textureID;
 }
 
+// A key reference for learning and implementing normal mapping is the article by Joey de Vries on his website LearnOpenGL: 
+// https://learnopengl.com/Advanced-Lighting/Normal-Mapping
+
 void Wall::setupWall() {
     // Define corner positions of the wall, texture coordinates, and normal vector
     glm::vec3 topLeftCorner(-1.0f, 1.0f, 0.0f);
@@ -180,12 +183,6 @@ void Wall::draw(Shader& shader, const glm::mat4& projection, const glm::mat4& vi
     glUniform3fv(shader.getUniformLocation("viewPos"), 1, glm::value_ptr(viewPos));
     glUniform3fv(shader.getUniformLocation("lightPos"), 1, glm::value_ptr(lightPos));
 
-    //glActiveTexture(textureSlot);
-    //glBindTexture(GL_TEXTURE_CUBE_MAP, m_cube_map_texture);
-    //glUniform1i(shader.getUniformLocation("sampler_cube"), 0);
-
-    //unsigned int diffuseMap = loadWallmap("resources/textures/tree.jpg");
-    //unsigned int normalMap = loadWallmap("resources/textures/tree_normal.jpg");
 
 
     glActiveTexture(GL_TEXTURE3);
