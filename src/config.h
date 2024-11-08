@@ -47,8 +47,26 @@ namespace config {
     const std::map<std::string, GLuint> textureSlots = {
         {"mesh", GL_TEXTURE0},
         {"scene", GL_TEXTURE1},
-        {"cube", GL_TEXTURE2}
+        {"cube", GL_TEXTURE2},
+        //......
+		{"minimap", GL_TEXTURE5}
     };
+
+	// ----------------------------------- MINIMAP ------------------------------------
+
+    const glm::vec3 minimapCameraPosition = glm::vec3(0.0f, 20.0f, 0.0f);  // 高处位置
+    const glm::vec3 targetPosition = glm::vec3(0.0f, 0.0f, 0.0f);           // 目标位置
+    const glm::vec3 upDirection = glm::vec3(0.0f, 0.0f, -1.0f);             // 向下的 up 方向
+    const glm::mat4 minimapView = glm::lookAt(minimapCameraPosition, targetPosition, upDirection);
+
+    const float size = 10.0f;  // display range
+    const glm::mat4 minimapProjection = glm::ortho(-size, size, -size, size, 1.0f, 100.0f);
+
+    const float minimapWidth = 200.0f;
+    const float minimapHeight = 200.0f;
+
+    const std::string minimapTexturePath = "resources/scene/bottom.jpg";  // bottom
+
 }
 
 #endif // CONFIG_H

@@ -33,6 +33,7 @@ DISABLE_WARNINGS_POP()
 #include "bezier_curve.h"
 #include "HDR.h"
 #include "particle_generator.h"
+#include "minimap.h"
 
 
 
@@ -442,6 +443,12 @@ public:
             particleBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/particle_vert.glsl");
             particleBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/particle_frag.glsl");
             m_particleShader = particleBuilder.build();
+
+            ShaderBuilder minimapBuilder;
+            minimapBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/minimap_vert.glsl");
+            minimapBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/minimap_frag.glsl");
+            m_minimapShader = minimapBuilder.build();
+
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -461,6 +468,9 @@ public:
         float deltaTime = 0.0f;
         float lastFrame = 0.0f;
 
+        glm::mat4 minimapView, minimapProjection;
+        m_minimap.setupHighAltitudeCamera(minimapView, minimapProjection);
+
 
         while (!m_window.shouldClose()) {
             // This is your game loop
@@ -479,6 +489,7 @@ public:
             int x = (windowSize.x - viewportSize) / 2;
             int y = (windowSize.y - viewportSize) / 2;
 
+
             glViewport(x, y, viewportSize, viewportSize);
 
             m_window.updateInput();
@@ -491,6 +502,13 @@ public:
             glClearDepth(1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+			// Render to framebuffer for minimap
+            glBindFramebuffer(GL_FRAMEBUFFER, m_minimap.getFramebuffer());
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            //m_minimap.draw(m_minimapShader, config::m_modelMatrix, minimapView, minimapProjection);
+
+
             // ...
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LEQUAL);
@@ -502,6 +520,11 @@ public:
             // Normals should be transformed differently than positions (ignoring translations + dealing with scaling):
             // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
             const glm::mat3 normalModelMatrix = config::normalModelMatrix;
+
+
+		
+
+
 
             // render scene: remove translation from the view matrix
             glm::mat4 sceneView = glm::mat4(glm::mat3(view));
@@ -600,8 +623,10 @@ public:
 				}
 
                 lights[0].position = m_bezierCurve.getCurrentPointOnPath();
-			}
-                        
+			}                  
+
+
+			// PBR shading
 
             m_pbrShader.bind();
             glUniform3fv(m_pbrShader.getUniformLocation("cameraPos"), 1, glm::value_ptr(cameraPos));
@@ -663,6 +688,21 @@ public:
                 if(light.color != glm::vec3(0.0))
                     light.renderLightSource(m_lightShader, mvpMatrix);
             }
+
+
+			// Render to framebuffer for minimap
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);  // unbind the framebuffer
+
+            int minimapViewportSize = 200;
+            int minimapX = windowSize.x - minimapViewportSize - 20;
+            int minimapY = windowSize.y - minimapViewportSize - 20;
+
+            glViewport(minimapX, minimapY, minimapViewportSize, minimapViewportSize);
+            //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glDisable(GL_DEPTH_TEST);
+            m_minimap.draw(m_minimapShader, config::m_modelMatrix, minimapView, minimapProjection);
+			glEnable(GL_DEPTH_TEST);
 
             GLenum error = glGetError();
             if (error != GL_NO_ERROR) {
@@ -733,6 +773,7 @@ private:
     Shader m_HDRpreShader;
     Shader m_brdfShader;
     Shader m_particleShader;
+	Shader m_minimapShader;
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
@@ -756,6 +797,7 @@ private:
     bool see_robot_arm{ false };
     HDR m_HDR{};
     BezierCurve m_bezierCurve {true, 0.0};
+	Minimap m_minimap { 300.0f, 300.0f, 512, 512 };
     ParticleGenerator* Particles;
     unsigned int nr_particles = 500;
     std::vector<Particle> particles;
