@@ -115,3 +115,18 @@ void Minimap::draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat4
 
     glBindVertexArray(0);
 }
+
+void Minimap::drawQuadWithTexture(Shader& shader) {
+    // Assuming you have a quad with VAO/VBO set up for 2D rendering
+    glBindTexture(GL_TEXTURE_2D, m_texture); // Bind the minimap texture
+
+    // Set up shader for 2D drawing
+    shader.bind();
+    glUniform1i(shader.getUniformLocation("m_texture"), 0); // Set texture uniform
+
+    // Render the quad (with appropriate transformations)
+    glBindVertexArray(m_vao);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+

@@ -39,7 +39,15 @@ public:
     // Method to draw the minimap to the screen
     void draw(Shader& shader, const glm::mat4& modelMatrix, const glm::mat4& view, const glm::mat4& projection);
 
+    void drawQuadWithTexture(Shader& shader);
+
     GLuint getFramebuffer() const { return m_framebuffer; }
+
+	GLuint getTextureWidth() const { return m_textureWidth; }
+
+	GLuint getTextureHeight() const { return m_textureHeight; }
+
+	GLuint getTexture() const { return m_texture; }
 
 private:
     GLuint m_texture;          // The texture to store the minimap

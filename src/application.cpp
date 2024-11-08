@@ -506,8 +506,13 @@ public:
 			// Render to framebuffer for minimap
             glBindFramebuffer(GL_FRAMEBUFFER, m_minimap.getFramebuffer());
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            //m_minimap.draw(m_minimapShader, config::m_modelMatrix, minimapView, minimapProjection);
 
+            glViewport(x, y, m_minimap.getTextureWidth(), m_minimap.getTextureHeight());
+            m_minimap.draw(m_minimapShader, config::m_modelMatrix, minimapView, minimapProjection); // Draw the minimap texture
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            glViewport(x, y, viewportSize, viewportSize);
 
             // ...
             glEnable(GL_DEPTH_TEST);
@@ -690,19 +695,23 @@ public:
             }
 
 
-			// Render to framebuffer for minimap
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);  // unbind the framebuffer
+            //int minimapViewportSize = 200;
+            //int minimapX = windowSize.x - minimapViewportSize - 20;
+            //int minimapY = windowSize.y - minimapViewportSize - 20;
 
-            int minimapViewportSize = 200;
-            int minimapX = windowSize.x - minimapViewportSize - 20;
-            int minimapY = windowSize.y - minimapViewportSize - 20;
-
-            glViewport(minimapX, minimapY, minimapViewportSize, minimapViewportSize);
+            //glViewport(minimapX, minimapY, minimapViewportSize, minimapViewportSize);
             //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glDisable(GL_DEPTH_TEST);
-            m_minimap.draw(m_minimapShader, config::m_modelMatrix, minimapView, minimapProjection);
-			glEnable(GL_DEPTH_TEST);
+            glDisable(GL_DEPTH_TEST); // Disable depth test for 2D rendering
+            glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind framebuffer (back to the screen)
+
+            //glViewport(x, y, viewportSize, viewportSize);
+            glViewport(0, 0, m_minimap.getTextureWidth(), m_minimap.getTextureHeight());
+
+            m_minimap.drawQuadWithTexture(m_minimapShader); // Render the minimap quad with the texture
+
+			glEnable(GL_DEPTH_TEST); // Re-enable depth test
+
 
             GLenum error = glGetError();
             if (error != GL_NO_ERROR) {
@@ -797,7 +806,7 @@ private:
     bool see_robot_arm{ false };
     HDR m_HDR{};
     BezierCurve m_bezierCurve {true, 0.0};
-	Minimap m_minimap { 300.0f, 300.0f, 512, 512 };
+	Minimap m_minimap { 300.0f, 300.0f, 256, 256 };
     ParticleGenerator* Particles;
     unsigned int nr_particles = 500;
     std::vector<Particle> particles;
