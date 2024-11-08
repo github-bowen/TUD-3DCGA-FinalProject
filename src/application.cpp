@@ -366,7 +366,7 @@ public:
     }
 
     void __init_meshes() {
-        m_meshes = GPUMesh::loadMeshGPU(RESOURCE_ROOT MESH_PATH);
+        m_meshes = GPUMesh::loadMeshGPU(RESOURCE_ROOT MESH_DRAGON_PATH);
     }
 
     void __init_shader() {
