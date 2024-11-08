@@ -164,6 +164,7 @@ void main()
     vec3 IBLSF = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, localRoughness);
     vec2 envBRDF = texture(brdfTex, vec2(max(dot(N, V), 0.0), localRoughness)).rg;
     vec3 IBLspecular = preColor * (IBLSF*envBRDF.x + envBRDF.y);
+    //IBLspecular = preColor;
 
     vec3 ambient = vec3(0.03);
     if(!IBL)    ambient = vec3(0.03) * localAlbedo * localAo;

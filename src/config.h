@@ -7,7 +7,8 @@
 #include <map>
 
 #define TEXTURE_PATH "resources/textures/checkerboard.png"
-#define MESH_PATH "resources/meshes/dragon.obj"
+#define MESH_DRAGON_PATH "resources/meshes/dragon.obj"
+#define MESH_CERBERUS_PATH "resources/meshes/gun.obj"
 
 namespace config {
 
